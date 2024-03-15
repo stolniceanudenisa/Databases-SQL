@@ -1,0 +1,110 @@
+CREATE DATABASE Lab3
+use Lab3
+
+CREATE TABLE Movie(
+	id_movie INT PRIMARY KEY,
+	nume nvarchar(255),
+	release_date DATE
+)
+
+CREATE TABLE Actor(
+	id_actor INT PRIMARY KEY,
+	nume nvarchar(255),
+	date_of_birth DATE
+)
+
+
+CREATE TABLE Distributions(
+	id_actor INT  NOT NULL,
+	id_movie INT  NOT NULL, 
+	CONSTRAINT pk_distributions PRIMARY KEY(id_actor, id_movie),
+	FOREIGN KEY (id_actor) REFERENCES Actor(id_actor),
+	FOREIGN KEY (id_movie) REFERENCES Movie(id_movie)
+)
+
+GO
+CREATE OR ALTER PROCEDURE AddMovie @id_movie int, @nume text, @release_date nvarchar(255)
+AS  --pornim procedura     begin=as
+IF ISDATE(@release_date)=1   --true = 1 in sql, 0=false
+BEGIN
+	INSERT INTO Movie VALUES(@id_movie,@nume, @release_date)
+	PRINT 'INSERTED MOVIE'
+END --inchidem acolada d
+ELSE
+	PRINT 'INVALID DATE'
+
+EXEC AddMovie @id_movie = 10, @nume='Movie1', @release_date ='2023-11-14';
+
+
+SELECT * FROM Movie;
+
+
+
+-- functie ce verifica daca un movie are id numeric si date de tip date
+CREATE OR ALTER FUNCTION TestValues (
+	@id_movie nvarchar (20),
+	@nume nvarchar (50),
+	@release_date nvarchar(20)
+)
+RETURNS bit AS
+BEGIN
+	DECLARE @return_value bit;
+	set @return_value = 'true'
+	IF ISNUMERIC(@id_movie) = 0
+		set @return_value = 'false'
+	IF ISDATE(@release_date) = 0
+		set @return_value = 'false'
+	RETURN @return_value
+END
+
+SELECT dbo.TestValues(4,'D', '2023-11-14') -- VA DA 1
+SELECT dbo.TestValues('A','D', '2023-11-14') -- VA DA 0
+--sa fac un for pentru selectarea tuturor filmelor
+
+--BEGIN 
+--END
+=
+--{
+--}
+
+--https://www.w3schools.com/sql/sql_ref_sqlserver.asp
+--https://www.w3schools.com/sql/sql_stored_procedures.asp
+
+CREATE OR ALTER VIEW [Actor in Movies] AS
+SELECT Actor.nume AS Actor_name, Movie.nume as Movie_name, Movie.release_date
+FROM Actor 
+INNER JOIN Distributions ON Actor.id_actor = Distributions.id_actor
+INNER JOIN Movie ON Distributions.id_movie = Movie.id_movie
+
+
+
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK
+
+
+INSERT INTO Actor VALUES(3, 'TEST', '2023-11-11')
+DELETE Actor WHERE id_actor=3 ;
+DELETE FROM Actor WHERE id_actor=3 ;
+
+
+ALTER TABLE Actor
+ALTER COLUMN nume nvarchar(50)
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK
+
+
+--video trigger actor
+
+--la insert punem elemente de validare in trigger

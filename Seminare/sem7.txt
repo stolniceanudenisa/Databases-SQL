@@ -1,0 +1,39 @@
+CASE 
+	input expression WHEN when_expression 
+		THEN result_expression
+ELSE
+	else_result_expression
+
+SLECT nume, pret, sezon=CASE sezon
+WHEN 'I' THEN N'Iarna'
+WHEN 'P' THEN N'Primavara'
+WHEN 'V' THEN N'Vara'
+WHEN 'T' THEN N'Toamna'
+else N'Nespecificat'
+END
+FROM Haine;
+
+
+
+SEARCHED CASE
+when bool-expr THEN result_expr  {...n}
+{else else_resutlt_expr}
+
+
+SELECT nume, pret, [gama_pret] = CASE
+WHEN pret = 0 THEN 'gratuit'
+WHRN pret <50 THEN 'sub 50 de lei' 
+WHEN pret >=50 AND pret <= 150 THEN 'intre 50 si 150
+ELSE 'peste 150'
+END
+FROM haine;
+
+
+INDECSI COLUMN STORE
+
+CREATE CLUSTERED COLUMN STORE INDEX
+CCIX_PERSOANE ON Persoane;
+
+CREATE NONCLUSTERED COLUMN STORE INDEX
+NCIX_Produse_nume_produs_pret ON Produse
+(nume_produs, pret);

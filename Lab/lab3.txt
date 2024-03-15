@@ -1,0 +1,21 @@
+Lab3 – atribuit in saptamana 5/6 cu predare in saptamana 7/8
+
+Pentru baza de date de la laboratorul 2, scrieti urmatoarele interogari SELECT:
+
+1. o interogare cu unul din operatorii UNION, INTERSECT, EXCEPT, la alegere;
+
+2. doua interogari cu operatorii INNER JOIN si, la alegere, LEFT JOIN, RIGHT JOIN sau FULL JOIN;
+   fiecare interogare va extrage date din minim trei tabele aflate in relatie many-to-many;
+
+3. trei interogari cu clauza GROUP BY; una dintre acestea va contine clauza HAVING; se vor folosi
+   cel putin trei operatori de agregare dintre: COUNT, SUM, AVG, MIN, MAX.
+
+4. optional: doua interogari imbricate – se vor folosi operatorii IN si EXISTS (interogare SELECT in clauza WHERE);
+
+Din interogarile de mai sus:
+• cel putin una va contine o conditie compusa cu AND, OR, NOT, paranteze in clauza WHERE;
+• cel putin una va utiliza DISTINCT.
+
+Observatii:
+Se poate modifica design-ul bazei de date de la laboratorul 2. 
+Interogarile trebuie sa aiba sens in contextul bazei de date si sa produca informatii relevante.

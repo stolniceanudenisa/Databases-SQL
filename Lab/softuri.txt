@@ -1,0 +1,16 @@
+Softuri necesare: 
+----------------
+- Microsoft SQL Server (se recomanda EXPRESS Edition)
+- SQL Server Management Studio (SSMS)
+
+
+Observatie:
+----------
+Pentru a va putea conecta la server din SSMS va trebui ca instanta de server sa fie activa (running)
+Daca nu e, va trebui sa o porniti din Settings, urmand pasii urmatori:
+
+- accesati Control Panel\System and Security\Administrative Tools, aici selectati Services
+- gasiti serverul vostru SQL Server...
+- click dreapta pe numele serverului, si Start
+
+Dupa ce porniti serverul, va puteti conecta la el din SSMS

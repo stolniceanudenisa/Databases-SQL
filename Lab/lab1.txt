@@ -1,0 +1,33 @@
+Lab1 – atribuit in saptamana 1/2 cu predare in saptamana 3/4
+
+1.	Ganditi-va la doua tipuri de entitate - E1 si E2 - care participa la o relatie many-to-many (m:n). 
+	Pentru E1 se aleg minim trei atribute, iar pentru E2 se alege un atribut. De exemplu, 
+	tipul Film cu atributele titlu, an aparitie, tara si tipul Actor cu atributul nume.
+
+Ideea este de a putea regasi informatii referitoare la cele doua entitati care participa la relatie.
+De exemplu, pentru fiecare film, sa se poata regasi urmatoarele date: titlu, actori, an aparitie, tara.
+
+---(2 puncte)
+
+2.	Pornind de la cele doua entitati de la punctul 1. si relatia dintre ele, realizati designul 
+	unei baze de date relationale cu minim 5 tabele, avand cel putin:
+	- un tip de relatie 1:n si 
+	- un tip de relatie m:n.
+
+---(5 puncte)
+
+3.	Creati baza de date in SQL Server (folosind instructiuni SQL).
+
+---(2 puncte)
+
+--(1 punct oficiu)
+
+Observatii: 
+----------
+i. Inainte sa incepeti laboratorul, anuntati asistentul de laborator care este subiectul propus
+(incluzand si o scurta descriere), printr-un anunt postat pe team-ul de laborator (detalii
+despre acesta la cadrul didactic responsabil de laborator).
+
+ii. Alegerea temelor se va face pe principiul primul venit, primul servit (e de preferat sa nu existe teme identice, iar in caz contrar, designul baze de date trebuie sa fie total diferit intre cele doua teme similar alese de doi/mai multi studenti). Lista de subiecte alese se va putea consulta tot pe pagina cursului.
+
+iii. Pentru logare pe serverul facultatii e nevoie de cont, contactati responsabilul de curs/laborator pentru a va crea unul (insa de obicei studentii prefera sa lucreze pe calculatorul propriu).

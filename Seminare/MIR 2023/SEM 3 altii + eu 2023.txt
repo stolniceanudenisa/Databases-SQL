@@ -1,0 +1,142 @@
+
+SUBLINIATE AMBELE INSEAMNA CA SUNT PRIMARY KEY
+
+
+-----------------------------------------
+
+CREATE TABLE Canal (
+    id INT,
+    nume NVARCHAR(255),
+    nr_subs INT
+);
+ALTER TABLE Canal
+ALTER COLUMN id INT NOT NULL; ---> FACEM ID SA NU FIE NULLABLE
+
+ALTER TABLE Canal
+ADD CONSTRAINT pk_CANAL PRIMARY KEY(ID); ---> FACEM PRIMARY KEY ID CE NU E PKEY cu CONSTRAINT
+
+-----------------------------------------
+
+
+CREATE DATABASE SEM3;
+
+USE SEM3;
+
+CREATE TABLE Categorie(
+	id_cat INT NOT NULL PRIMARY KEY,
+	nume NVARCHAR(30),
+	descriere NVARCHAR(100)
+);
+
+-----------------
+DECIMAL(10, 2) 9999999.99   10 digits, 2 dupa virgula       
+ 25.99
+
+BookID INT NOT NULL PRIMARY KEY,
+sau
+BookID INT PRIMARY KEY NOT NULL,
+-----------------
+
+
+CREATE TABLE Publicatii(
+	id_publ INT NOT NULL PRIMARY KEY,
+	titlu nvarchar(30),
+	abstract nvarchar(30),
+	autorp nvarchar(30),
+	id_cat INT NOT NULL 
+	FOREIGN KEY(id_cat)REFERENCES Categorie(id_cat)
+);
+
+CREATE TABLE Biblioteca(
+	id_biblio int NOT NULL PRIMARY KEY,
+	nume nvarchar(30),
+	site nvarchar(50)
+);
+
+CREATE TABLE Indexare(
+	id_publ int NOT NULL,
+	id_biblio int NOT NULL,
+	CONSTRAINT Pk_Indexare PRIMARY KEY(id_publ, id_biblio),
+	FOREIGN KEY (id_biblio) REFERENCES Biblioteca(id_biblio),
+	FOREIGN KEY (id_publ) REFERENCES Publicatii(id_publ)
+);
+
+
+SELECT Publicatii.titlu,Categorie.nume  
+FROM Publicatii
+INNER JOIN Categorie on Publicatii.id_cat=Categorie.id_cat      (on tabel principal = tabel final)
+WHERE autorp LIKE '%dfs'  - se termina cu dfs
+
+
+
+WHERE variabila LIKE 'a%'  -- incepe cu litera a
+		     'La%'  -- incepe cu La secventa
+                     'L_nd__'
+                      '%L%' - contine litera L
+
+
+-----------------------------------------
+
+SELECT Publicatii.titlu 
+FROM Publicatii
+LEFT JOIN Indexare on Publicatii.id_publ=Indexare.id_publ
+
+
+
+SELECT autorp 
+FROM Publicatii
+INNER JOIN Categorie on Publicatii.id_cat = Categorie.id_cat
+WHERE nume = 'a'
+UNION ALL
+SELECT autorp 
+FROM Publicatii
+INNER JOIN Categorie on Publicatii.id_cat = Categorie.id_cat
+where nume = 'sad';
+
+
+
+
+
+INSERT INTO Canal VALUES
+(2, 'B', 3331), (3, 'C', 414), (4, 'D', 41431);
+
+INSERT INTO Books (book_name, book_price, year_of_appearance)
+VALUES
+    ('Heads You Lose', 45, 2011),
+    ('Good Omens', 55, 1996);
+
+
+
+
+
+update Canal
+set nr_subs = nr_subs * 2 + 15
+where nr_subs%2 = 1
+
+DELETE FROM Books
+WHERE year_of_appearance >= 2015
+  AND book_price < 50.0;
+
+UPDATE Books
+SET book_price = book_price * 1.1  -- Crește prețul cu 10%
+
+
+ALTER TABLE BooksAuthors
+ALTER COLUMN book_id INT NOT NULL
+
+ALTER TABLE Video
+ADD data_postarii DATE;
+
+
+delete Canal
+where nr_subs >= 50000
+
+select max(nrvizualizari) as 'nr max vizualizari' from Video
+where ID_canal = 2
+
+
+
+
+
+
+

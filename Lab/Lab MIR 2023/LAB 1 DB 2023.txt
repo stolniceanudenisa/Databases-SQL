@@ -1,0 +1,108 @@
+many-to-many -> "Books" și "Authors", unde o carte poate avea mai multi autori, iar un autor poate sa scrie mai multe carti. 
+
+entitatea E1 (Books) - atribute:
+book_title  
+book_price  
+year_of_appearance
+
+
+
+entitatea E2 (Authors) - atribut:
+author_name
+ 
+ 
+many-to-many -> "Books" și "Authors", unde o carte poate avea mai multi autori, iar un autor poate sa scrie mai multe carti. 
+tabel "Customers" pentru stocarea informațiilor despre clienți
+tabel"BooksAuthors" pentru a gestiona relația "m:n" între cărți și autori
+tabel "BookCustomer" pentru a gestiona relația "1:n" între cărți și clienți
+tabel CustomerBooks - Many-to-One - Acest tabel va stoca informații despre (ce) client a achiziționat (ce) carte.
+table Genres - stocheaza mai multe genuri ale cartilor
+tabel BookGenres  - many-to-many relationship între tabelul Books și tabelul Genres
+many-to-many relationship table between Authors and Genres
+
+
+
+
+-- Crearea tabelului "Books" pentru stocarea informațiilor despre cărți
+CREATE TABLE Books (
+    BookID INT PRIMARY KEY IDENTITY(1,1),
+    BookTitle VARCHAR(255),
+    BookPrice DECIMAL(10, 2),
+    YearOfAppearance INT
+);
+
+-- Crearea tabelului "Authors" pentru stocarea informațiilor despre autori
+CREATE TABLE Authors (
+    AuthorID INT PRIMARY KEY IDENTITY(1,1),
+    AuthorName VARCHAR(255)
+);
+
+
+-- Crearea tabelului "Customers" pentru stocarea informațiilor despre clienți
+CREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY IDENTITY(1,1),
+    CustomerName VARCHAR(255),
+    CustomerEmail VARCHAR(255)
+);
+
+-- Crearea tabelului "Genres" pentru stocarea informațiilor despre genuri
+CREATE TABLE Genres (
+    GenreID INT PRIMARY KEY IDENTITY(1,1),
+    GenresName VARCHAR(255),
+);
+
+
+-- Crearea tabelului "BooksAuthors" pentru a gestiona relația "m:n" între cărți și autori
+CREATE TABLE BooksAuthors (
+    BookAuthorID INT PRIMARY KEY IDENTITY(1,1),
+    BookID INT,
+    AuthorID INT,
+    FOREIGN KEY (BookID) REFERENCES Books(BookID),
+    FOREIGN KEY (AuthorID) REFERENCES Authors(AuthorID)
+);
+
+-- Crearea tabelului "BookCustomers" pentru a gestiona relația "1:n" între cărți și clienți
+CREATE TABLE BookCustomers (
+    BookCustomerID INT PRIMARY KEY IDENTITY(1,1),
+    BookID INT,
+    CustomerID INT,
+    FOREIGN KEY (BookID) REFERENCES Books(BookID),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+
+Many-to-One Relationship (CUSTOMERS - BOOKS):
+ 
+CREATE TABLE CustomerBooks (
+    customer_book_id INT PRIMARY KEY IDENTITY(1,1),
+    customer_id INT,
+    book_id INT,
+    purchase_date DATE,
+    FOREIGN KEY (customer_id) REFERENCES Customers(customer_id),
+    FOREIGN KEY (book_id) REFERENCES Books(book_id)
+);
+
+
+many-to-many relationship between the Books table and the Genres  
+
+CREATE TABLE BookGenres (
+    Mbook_genre_id PRIMARY KEY IDENTITY(1,1),
+    book_id INT,
+    genre_id INT,
+    FOREIGN KEY (book_id) REFERENCES Books(book_id),
+    FOREIGN KEY (genre_id) REFERENCES Genres(genre_id)
+);
+
+
+
+
+-- Creating a many-to-many relationship table between Authors and Genres
+CREATE TABLE AuthorGenres (
+    author_genre_id INT PRIMARY KEY IDENTITY(1,1),
+    author_id INT,
+    genre_id INT,
+    FOREIGN KEY (author_id) REFERENCES Authors(author_id),
+    FOREIGN KEY (genre_id) REFERENCES Genres(genre_id)
+);
+
+

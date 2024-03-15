@@ -1,0 +1,1617 @@
+ 
+
+Practic baze de date
+
+----------------------------------------------
+
+Test BD 1
+
+Avem o baza de date care cuprinde 3 tabele: clienti, fabrici si ordine. Un client are un nume, o zi de nastere si o tara de origine. O fabrica are un nume si o locatie. Ordinele create de client cer produse de o anumita valoare din partea unei fabrici. Un client poate crea mai multe ordine aceleasi fabrici.
+
+
+
+1 Creati baza de date si tabelele aferente, incluzand si cheile primare si de legatura necesare descrierii problemei.
+
+2 Creati un View care sa cuprinda tara clientilor si suma totala a tuturor ordinelor create de catre clientii acelei tari. Ne intereseaza doar ordinele alocate fabricilor care au locatia in Statele Unite. Datele din View trebuie sa fie grupate dupa tara clientilor si sa se afiseze doar tarile si sumele care au o suma de valori mai mare decat 600 de dolari. La final, datele sa fie sortate dupa numele tarilor clientilor, in ordine descrescatoare.
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul client. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam ziua de nastere a clientilor sa fie dupa 1 ianuarie 1950, iar tarile din care putem avea clientii pot fi doar din urmatoarea lista (USA, UK, France, Germany).
+
+4 Creati o procedura care urmeaza sa insereze in tabelul client datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Ex. 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Client. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze prin intermediul procedurii necesare (VEZI Ex. 4).
+
+
+
+Client (ID, Name, Date_of_Birth, Country)
+Factory (ID, Name, Location)
+Orders (ID, ClientID, FactoryID, Value)
+
+
+----------------------------------------------
+
+CREATE DATABASE TEST 1
+USE TEST 1
+
+
+
+CREATE TABLE Client 
+(
+   client_id INT NOT NULL PRIMARY KEY,
+   client_name NVARCHAR(50) NOT NULL,
+   date_of_birth DATE NOT NULL,
+   country NVARCHAR(30) NOT NULL
+);
+
+
+
+CREATE TABLE Factory 
+(
+   factory_id INT NOT NULL PRIMARY KEY,
+   factory_name NVARCHAR(50) NOT NULL,
+   factory_location NVARCHAR(30) NOT NULL
+);
+
+
+CREATE TABLE Orders 
+(
+   order_id INT NOT NULL PRIMARY KEY,
+   client_id INT NOT NULL,
+   factory_id INT NOT NULL,
+   FOREIGN KEY (client_id) REFERENCES Client(client_id),
+   FOREIGN KEY (factory_id) REFERENCES Factory(factory_id),
+   order_value DECIMAL(10,2)
+
+);
+
+DELETE FROM Client
+DELETE FROM Factory
+DELETE FROM Orders
+SELECT * from Client
+
+
+INSERT INTO Client VALUES
+(1, 'Ion', '2001-10-01', 'Cluj'),
+(2, 'Mihai', '1999-10-01', 'Brasov'),
+(3, 'Alice Smith', '1985-08-22', 'United States');
+
+INSERT INTO Factory VALUES
+(1, 'Lapte', 'United States'),
+(2, 'Zahar', 'United States'),
+(3, 'Paine','United States'),
+(4, 'Factory A', 'Location X'),
+(5, 'Factory B', 'Location Y');
+
+INSERT INTO Orders VALUES
+(1, 2, 3, 7100.99),
+(2, 1, 1, 5000),
+(3,2, 1, 6000);
+ 
+
+----------------------------------------------
+
+2 Creati un View care sa cuprinda tara clientilor si suma totala a tuturor ordinelor create de catre clientii acelei tari. Ne intereseaza doar ordinele alocate fabricilor care au locatia in Statele Unite. Datele din View trebuie sa fie grupate dupa tara clientilor si sa se afiseze doar tarile si sumele care au o suma de valori mai mare decat 600 de dolari. La final, datele sa fie sortate dupa numele tarilor clientilor, in ordine descrescatoare.
+
+CREATE VIEW ClientOrdersTotal AS
+SELECT Client.country as Country, SUM(Orders.order_value) as Suma
+FROM Client
+JOIN Orders on Client.client_id = Orders.client_id
+JOIN Factory on Orders.factory_id = Factory.factory_id
+WHERE Factory.factory_location = 'United States'
+GROUP BY Client.country
+HAVING SUM(Orders.order_value) > 600
+
+
+SELECT * FROM ClientOrdersTotal
+ORDER BY Country DESC;  
+
+
+----------------------------------------------
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul client. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam ziua de nastere a clientilor sa fie dupa 1 ianuarie 1950, iar tarile din care putem avea clientii pot fi doar din urmatoarea lista (USA, UK, France, Germany).
+
+ALTER FUNCTION validateClient
+(	@client_id NVARCHAR(20),
+	@client_name NVARCHAR(50),
+	@date_of_birth NVARCHAR(50),
+	@country NVARCHAR(30) )
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit = 1;  
+
+	IF ISNUMERIC(@client_id) = 0 OR @client_id = ''  
+        SET @return_value = 0;
+
+	IF LEN(ISNULL(@client_name, '')) = 0
+        SET @return_value = 0;
+
+	IF LEN(ISNULL(@country, '')) = 0
+        SET @return_value = 0;
+	
+    IF ISDATE(@date_of_birth) = 0 OR @date_of_birth <= '1950-01-01' -- Check for valid date and greater than '1950-01-01'
+        SET @return_value = 0;
+
+	IF @country NOT IN ('USA', 'UK', 'FRANCE', 'GERMANY') -- Check for valid country
+		SET @return_value = 0;
+
+	RETURN @return_value;
+END
+
+
+SELECT dbo.validateClient('123', 'John Doe', '1990-05-15', 'USA') AS IsValid; -- Valid client
+SELECT dbo.validateClient('abc', 'Alice Smith', '1985-12-30', 'Germany') AS IsValid; --  to non-numeric ID
+SELECT dbo.validateClient('456', '', '1975-08-25', 'UK') AS IsValid; --   missing client name
+SELECT dbo.validateClient('789', 'Michael Johnson', '1970-02-10', '') AS IsValid; --   missing country
+SELECT dbo.validateClient('789', 'Michael Johnson', '1970-02-10', 'RO') AS IsValid; --   missing country
+SELECT dbo.validateClient('999', 'Sarah Brown', '1940-01-01', 'France') AS IsValid; --   date of birth earlier than 1950-01-01
+
+----------------------------------------------
+
+4 Creati o procedura care urmeaza sa insereze in tabelul client datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Ex. 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+CREATE PROCEDURE
+ALTER PROCEDURE addCLient
+	@client_id INT,
+	@client_name NVARCHAR(50),
+	@date_of_birth DATE,
+	@country NVARCHAR(30)
+AS
+BEGIN
+	IF dbo.validateClient(@client_id,@client_name, @date_of_birth, @country) = 1
+	BEGIN
+		INSERT INTO Client (client_id,client_name, date_of_birth, country)
+		VALUES (@client_id,@client_name, @date_of_birth, @country); -- parametrii la procedura ce ii introducem noi
+		PRINT 'Client inserat cu succes.';
+	END
+	ELSE
+	BEGIN
+		PRINT 'Datele clientului nu sunt valide. Client neinserat.';
+	END;
+END
+
+EXEC addCLient 8,'aaaa', '2001-10-01','USA'
+
+EXEC addCLient 
+    @client_id = 6, 
+    @client_name = 'denisa', 
+	@date_of_birth ='2001-10-01',
+    @country = 'USA';
+
+
+SELECT * FROM Client
+
+
+----------------------------------------------
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Client. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze prin intermediul procedurii necesare (VEZI Ex. 4).
+
+DROP TRIGGER insertClient;
+
+
+CREATE OR ALTER TRIGGER insertClient
+ON Client
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @client_id INT, @client_name NVARCHAR(50), @date_of_birth DATE, @country NVARCHAR(30);
+	
+	SELECT @client_id = client_id, @client_name = client_name, @date_of_birth = date_of_birth, @country = country
+	FROM inserted;
+	
+	EXEC addCLient @client_id, @client_name, @date_of_birth, @country;
+END
+
+
+ 
+INSERT INTO Client (client_id, client_name, date_of_birth, country) -- in loc de asta se apeleaza trigger-ul
+VALUES (20, 'John Doe', '1990-05-15', 'USA');
+
+----------------------------------------------
+
+
+
+Test BD 2
+
+2 Creati un View care sa cuprinda locatia fabricilor si media tuturor ordinelor create de clientii acestora. Ne intereseaza doar ordinele clientilor care sunt din Statele Unite. Datele din view trebuie grupate dupa locatia fabricilor si sa afiseze doar fabricile ale caror ordine au o valoare medie mai mare decat 1000 de dolari. La final, datele sa fie sortate dupa locatia fabricilor, in ordine descrescatoare.
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul client. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam ziua de nastere a clientilor sa fie dupa 1 ianuarie 1980, iar tarile din care putem avea clientii pot fi doar din urmatoarea lista (USA, Romania, Serbia, Argentina).
+
+4 Creati o procedura care urmeaza sa insereze in tabelul client datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Factory. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, afisand la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec.
+
+
+
+
+----------------------------------------------
+
+2 Creati un View care sa cuprinda locatia fabricilor si media tuturor ordinelor create de clientii acestora. Ne intereseaza doar ordinele clientilor care sunt din Statele Unite. Datele din view trebuie grupate dupa locatia fabricilor si sa afiseze doar fabricile ale caror ordine au o valoare medie mai mare decat 1000 de dolari. La final, datele sa fie sortate dupa locatia fabricilor, in ordine descrescatoare.
+
+
+CREATE VIEW view2 AS
+SELECT Factory.factory_location, AVG(Orders.order_value) AS Media
+FROM Factory
+JOIN Orders ON Orders.factory_id = Factory.factory_id
+JOIN Client ON Client.client_id  = Orders.client_id
+WHERE Client.country = 'United States'
+GROUP BY Factory.factory_location
+HAVING AVG(Orders.order_value) > 1000
+
+SELECT * FROM view2
+ORDER BY factory_location DESC
+
+
+----------------------------------------------
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul client. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam ziua de nastere a clientilor sa fie dupa 1 ianuarie 1980, iar tarile din care putem avea clientii pot fi doar din urmatoarea lista (USA, Romania, Serbia, Argentina).
+
+ALTER FUNCTION validateClient
+(	@client_id NVARCHAR(20),
+	@client_name NVARCHAR(50),
+	@date_of_birth NVARCHAR(20),
+	@country NVARCHAR(30) )
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;  
+	set @return_value = 'true'
+	IF ISNUMERIC(@client_id) = 0    
+        SET @return_value = 'false';
+	
+	IF @client_id = ''   
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@client_name, '')) = 0
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@country, '')) = 0
+        SET @return_value = 'false';
+	
+    IF ISDATE(@date_of_birth) = 0      
+        SET @return_value = 'false';
+
+	IF @date_of_birth <= '1980-01-01'  
+        SET @return_value = 'false';
+
+	IF @country NOT IN ('USA', 'Romania', 'Serbia', 'Argentina')  
+		SET @return_value = 'false';
+
+	RETURN @return_value;
+END
+
+
+SELECT dbo.validateClient('123', 'John Doe', '1990-05-15', 'USA') AS IsValid; -- Valid client
+SELECT dbo.validateClient('abc', 'Alice Smith', '1985-12-30', 'Argentina') AS IsValid; --  to non-numeric ID
+SELECT dbo.validateClient('456', '', '1975-08-25', 'UK') AS IsValid; --   missing client name
+SELECT dbo.validateClient('789', 'Michael Johnson', '1300-02-10', 'Romania') AS IsValid; --   missing country
+SELECT dbo.validateClient('', 'Michael Johnson', '1970-02-10', 'Romania') AS IsValid; --   missing country
+SELECT dbo.validateClient('999', 'Sarah Brown', '1940-01-01', 'Serbia') AS IsValid; --   date of birth earlier than 1980-01-01
+
+
+----------------------------------------------
+
+4 Creati o procedura care urmeaza sa insereze in tabelul client datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+
+ALTER PROCEDURE addCLient
+	@client_id INT,
+	@client_name NVARCHAR(50),
+	@date_of_birth NVARCHAR(20),
+	@country NVARCHAR(30)
+AS
+BEGIN
+	IF dbo.validateClient(@client_id,@client_name, @date_of_birth, @country) = 1
+	BEGIN
+		INSERT INTO Client (client_id,client_name, date_of_birth, country)
+		VALUES (@client_id,@client_name, @date_of_birth, @country);
+		PRINT 'Client inserat cu succes.';
+	END
+	ELSE
+	BEGIN
+		PRINT 'Datele clientului nu sunt valide. Client neinserat.';
+	END;
+END
+
+EXEC addCLient 6,'aaaa', '1333-10-01','USA'
+
+EXEC addCLient 
+    @client_id = 6, 
+    @client_name = 'denisa', 
+	@date_of_birth ='2001-10-01',
+    @country = 'USA';
+
+
+SELECT * FROM Client
+
+
+----------------------------------------------
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Factory. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, afisand la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec.
+
+
+DROP TRIGGER trgInsteadOfInsertFactory
+
+ALTER TRIGGER trgInsteadOfInsertFactory
+ON Factory
+INSTEAD OF INSERT
+AS
+BEGIN
+        SET NOCOUNT ON;
+	DECLARE @factory_id INT, @factory_name NVARCHAR(50), @factory_location NVARCHAR(50);
+    SELECT @factory_id = factory_id, @factory_name = factory_name, @factory_location = factory_location FROM inserted;
+
+	 BEGIN TRY
+		INSERT INTO Factory (factory_id, factory_name, factory_location)
+		VALUES (@factory_id + 10, @factory_name, @factory_location);
+		DECLARE @SuccessMessage NVARCHAR(200);
+        SET @SuccessMessage = 'Datele au fost inserate cu succes la ' + CONVERT(NVARCHAR(30), GETDATE(), 121);
+        ---- 121 - yyyy-mm-dd cu milisecunde
+		---- 20 fara milisecunde 
+		PRINT @SuccessMessage;
+	END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMessage NVARCHAR(200);
+        SET @ErrorMessage = 'EROARE: ' + ERROR_MESSAGE();
+        PRINT @ErrorMessage;
+    END CATCH;	
+END	
+ 
+INSERT INTO Factory (factory_id, factory_name, factory_location)
+VALUES
+    (12, 'Factory 1', 'Location 1'),
+    (22, 'Factory 2', 'Location 2');
+
+
+
+----------------------------------------------
+
+Test BD 3 - test eu
+
+Avem o baza de date care cuprinde 3 tabele: clienti, flori si ordine. Un client are un nume, o zi de nastere si o localitate. O floare are un nume, o culoare si un pret (in dolari, sa se tina cont de centi). Ordinele create de client cuprind flori de o anumita valoare, cantitate, pret total si se mentioneaza data ordinului. Un client poate crea mai multe ordine aceleasi florarii.
+
+Client (ID, Name, Date_of_Birth, City)
+Flower(ID, Name, Color, Price)
+Orders (ID, ClientID, FlowerID, Quantity, TotalPrice, OrderDate)
+
+1 Creati baza de date si tabelele aferente, incluzand si cheile primare si de legatura necesare descrierii problemei.
+
+
+2 Creati un View care sa cuprinda numele clientului si suma totala a preturilor ordinelor. Criteriile necesare sunt urmatoarele:
+a)   Clientii trebuie sa faca parte din urmatoarele orase (Bucuresti, Targu Mures, Cluj-Napoca, Brasov)
+b)   Suma totala a valorilor sa depaseasca valoare de 150 de dolari.
+c)   Ne intereseaza doar florile care sa aiba culoarea roz.
+d)   La final, sa se ordoneze view-ul dupa suma totala a valorilor in ordine descrescatoare.
+
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul client. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam ziua de nastere a clientilor sa fie inainte de 1 ianuarie 2010, iar orasele din care putem avea clientii pot fi doar din urmatoarea lista (Bucuresti, Targu Mures, Cluj-Napoca, Brasov, Sibiu, Iasi, Braila).
+
+
+4 Creati o procedura care urmeaza sa insereze in tabelul client datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Orders. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, respectand validarile obligatorii pentru tipurile de date si cu urmatoarele validari in plus:
+a)  ID si TotalPrice sa fie numerice.
+b)  TotalPrice sa nu fie negativ.
+c)  Color sa fie din urmatoarea lista (roz, rosu, albastru, alb, galben, verde)
+
+Afiseaza la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec.
+
+
+----------------------------------------------
+
+Client (ID, Name, Date_of_Birth, City)
+Flower(ID, Name, Color, Price)
+Orders (ID, ClientID, FlowerID, Quantity, TotalPrice, OrderDate)
+
+
+CREATE TABLE Client
+(
+	client_id INT NOT NULL PRIMARY KEY,
+	client_name NVARCHAR(50) NOT NULL,
+	date_of_birth DATE NOT NULL,
+	city NVARCHAR(30) NOT NULL
+);
+
+CREATE TABLE Flower
+(
+	flower_id INT NOT NULL PRIMARY KEY,
+	flower_name NVARCHAR(50) NOT NULL,
+	flower_color NVARCHAR(20) NOT NULL,
+	flower_price DECIMAL(10,2) NOT NULL
+)
+
+CREATE TABLE Orders
+(
+	order_id INT NOT NULL PRIMARY KEY,
+	client_id INT NOT NULL ,
+	flower_id INT NOT NULL ,
+	order_quantity DECIMAL(10,2) NOT NULL,
+	order_total_price DECIMAL(10,2) NOT NULL,
+	order_date DATE NOT NULL
+
+	FOREIGN KEY (client_id) REFERENCES Client(client_id),
+	FOREIGN KEY (flower_id) REFERENCES Flower(flower_id)
+)
+
+
+INSERT INTO Client (client_id, client_name, date_of_birth, city)
+VALUES
+    (10, 'Andrei', '1990-05-15', 'Brasov'),
+    (11, 'Ioana', '1985-08-22', 'Bucuresti');
+
+INSERT INTO Flower (flower_id, flower_name, flower_color, flower_price)
+VALUES
+    (1, 'Lalea', 'roz',120.2),
+    (2, 'Liliac', 'mov',19.1);
+
+INSERT INTO Orders (order_id, client_id, flower_id, order_quantity, order_total_price, order_date)
+VALUES
+    (1, 10, 1, 999, 1200.50,'1990-05-05') ,
+    (2, 11, 2, 800, 1234.75, '1990-05-05')
+
+SELECT * FROM Client
+SELECT * FROM Flower
+SELECT * FROM Orders
+
+----------------------------------------------
+
+2 Creati un View care sa cuprinda numele clientului si suma totala a preturilor ordinelor. Criteriile necesare sunt urmatoarele:
+a)   Clientii trebuie sa faca parte din urmatoarele orase (Bucuresti, Targu Mures, Cluj-Napoca, Brasov)
+b)   Suma totala a valorilor sa depaseasca valoare de 150 de dolari.
+c)   Ne intereseaza doar florile care sa aiba culoarea roz.
+d)   La final, sa se ordoneze view-ul dupa suma totala a valorilor in ordine descrescatoare.
+
+
+CREATE VIEW client_view AS
+SELECT Client.client_name, SUM(Orders.order_total_price) AS price
+FROM Client 
+JOIN Orders ON Client.client_id = Orders.client_id
+JOIN Flower ON Orders.flower_id = Flower.flower_id
+WHERE Client.city IN ('Bucuresti', 'Targu Mures', 'Cluj-Napoca', 'Brasov') -- clienti din orasele acestea
+AND Flower.flower_color = 'roz' -- doar flori cu culoarea roz
+GROUP BY Client.client_name
+HAVING SUM(Orders.order_total_price) > 150 --suma totala a valorilor sa depaseasca valoare de 150 de dolari
+
+
+SELECT * FROM client_view 
+ORDER BY price DESC; -- sortare descrescatoare dupa pret
+
+
+
+----------------------------------------------
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul client. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam ziua de nastere a clientilor sa fie inainte de 1 ianuarie 2010, iar orasele din care putem avea clientii pot fi doar din urmatoarea lista (Bucuresti, Targu Mures, Cluj-Napoca, Brasov, Sibiu, Iasi, Braila).
+
+CREATE FUNCTION validateClient
+(	@client_id NVARCHAR(20),
+	@client_name NVARCHAR(50),
+	@date_of_birth NVARCHAR(20),
+	@city NVARCHAR(30))
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	set @return_value = 'true';
+
+	IF ISNUMERIC(@client_id) = 0    
+        SET @return_value = 'false';
+	
+	IF @client_id = ''   
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@client_name, '')) = 0
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@city, '')) = 0
+        SET @return_value = 'false';
+	
+    IF ISDATE(@date_of_birth) = 0      
+        SET @return_value = 'false';
+
+	IF @date_of_birth >= '2010-01-01'  
+        SET @return_value = 'false';
+
+	IF @city NOT IN ('Bucuresti', 'Targu Mures', 'Cluj-Napoca', 'Brasov', 'Sibiu', 'Iasi', 'Braila')  
+		SET @return_value = 'false';
+
+	RETURN @return_value;
+END
+
+
+SELECT dbo.validateClient('1', 'Ana', '1990-05-05', 'Bucuresti') AS IsValid; -- client valid
+SELECT dbo.validateClient('abc', 'Ion', '1985-12-30', 'Brasov') AS IsValid; -- id ul nu este numeric
+SELECT dbo.validateClient('2', '', '1975-08-25', 'Sibiu') AS IsValid; --   numele e gol
+SELECT dbo.validateClient('3', 'Andreea', '1940-01-01', 'AAA') AS IsValid; -- orasul nu este bun
+SELECT dbo.validateClient('4', 'Andreea', '2022-01-01', 'Brasov') AS IsValid; -- data nasterii nu este buna
+
+
+----------------------------------------------
+
+4 Creati o procedura care urmeaza sa insereze in tabelul client datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+
+CREATE PROCEDURE addCLient
+	@client_id INT,
+	@client_name NVARCHAR(50),
+	@date_of_birth NVARCHAR(20),
+	@city NVARCHAR(30)
+AS
+BEGIN
+	IF dbo.validateClient(@client_id,@client_name, @date_of_birth, @city) = 1
+	BEGIN
+		INSERT INTO Client (client_id,client_name, date_of_birth, city)
+		VALUES (@client_id,@client_name, @date_of_birth, @city);
+		PRINT 'Clientul a fost inserat cu succes.';
+	END
+	ELSE
+	BEGIN
+		PRINT 'Datele clientului nu sunt valide. Client neinserat.';
+	END;
+END
+
+
+
+EXEC addCLient 
+    @client_id = 9, 
+    @client_name = 'Cristian', 
+	@date_of_birth ='1990-05-05',
+    @city = 'Bucuresti';
+
+
+
+EXEC addCLient 
+    @client_id = 7, 
+    @client_name = 'Ana', 
+	@date_of_birth ='1990-05-05',
+    @city = 'AAAAAA';
+
+SELECT * FROM Client
+
+
+
+
+----------------------------------------------
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Orders. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, respectand validarile obligatorii pentru tipurile de date si cu urmatoarele validari in plus:
+a)  ID si TotalPrice sa fie numerice.
+b)  TotalPrice sa nu fie negativ.
+c)  Color sa fie din urmatoarea lista (roz, rosu, albastru, alb, galben, verde)
+
+Afiseaza la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec.
+
+
+
+ALTER TRIGGER triggerInsteadOfOrders
+ON Orders
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @order_id INT, @client_id INT,
+	@flower_id INT, @order_quantity DECIMAL(10,2),
+	@order_total_price DECIMAL(10,2), @order_date DATE;
+
+	-- luam datele din 'inserted'
+	SELECT @order_id = order_id, @client_id = client_id, @flower_id = flower_id, 
+	@order_quantity = order_quantity, @order_total_price = order_total_price, 
+	@order_date = order_date FROM inserted;
+
+	-- id si price sa fie numerice
+	-- price sa nu fie negativ
+	-- culoarea sa fie din lista (roz, rosu, albastru, alb, galben, verde)
+    
+	IF ISNUMERIC(@order_id) = 1 AND ISNUMERIC(@order_total_price) = 1
+	AND @order_total_price > 0 
+	AND dbo.validateFlowerColor(@flower_id) = 1 -- ceva nu merge aici nu se valideaza bine
+	BEGIN
+        INSERT INTO Orders (order_id, client_id, flower_id, order_quantity, order_total_price, order_date)
+        VALUES (@order_id, @client_id, @flower_id, @order_quantity, @order_total_price, @order_date);
+        DECLARE @SuccessMessage NVARCHAR(100);
+
+		-- afisare mesaj timestamp + mesaj succes
+        SET @SuccessMessage = 'Datele au fost inserate cu succes la ' + CONVERT(NVARCHAR(30), GETDATE(), 121);
+		-- 121 - afisare data de tipul yyyy-mm-dd cu milisecunde
+		-- 20 la fel dar fara milisecunde
+        PRINT @SuccessMessage;
+	END
+	ELSE
+	BEGIN
+		DECLARE @ErrorMessage NVARCHAR(50);
+        SET @ErrorMessage = 'Eroare la inserarea datelor.';
+        PRINT @ErrorMessage;
+	END
+END
+
+
+INSERT INTO Orders (order_id, client_id, flower_id, order_quantity, order_total_price, order_date)
+VALUES(3,10,4,5,50.00,'1999-02-02')
+
+
+-----------------------------------------------
+
+
+--- functie ce valideaza culoarea unei flori
+CREATE FUNCTION validateFlowerColor
+(
+    @flower_color NVARCHAR(20)
+)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @IsValid BIT = 0;
+
+    IF @flower_color IN ('roz', 'rosu', 'albastru', 'alb', 'galben', 'verde')
+    BEGIN
+        SET @IsValid = 1;
+    END
+
+    RETURN @IsValid;
+END;
+
+SELECT dbo.validateFlowerColor('roz') AS IsValid; -- culoare valida
+SELECT dbo.validateFlowerColor('turcoaz') AS IsValid; -- culoare nevalida
+
+
+INSERT INTO Flower (flower_id, flower_name, flower_color, flower_price)
+VALUES
+    (4, 'Trandafir', 'negru',120.2)
+
+SELECT * FROM Orders
+
+----------------------------------------------
+
+Test BD 4
+
+Avem o baza de date care cuprinde 3 tabele: clienti, flori si ordine. Un client are un nume, o zi de nastere si o localitate. O floare are un nume, o culoare si un pret (in dolari, sa se tina cont de centi). Ordinele create de client cuprind flori de o anumita valoare, cantitate, pret total si se mentioneaza data ordinului. Un client poate crea mai multe ordine aceleasi florarii.
+
+Client (ID, Name, Date_of_Birth, City)
+Flower(ID, Name, Color, Price)
+Orders (ID, ClientID, FlowerID, Quantity, TotalPrice, OrderDate)
+
+1 Creati baza de date si tabelele aferente, incluzand si cheile primare si de legatura necesare descrierii problemei.
+
+
+
+2 Creati un View care sa cuprinda numele clientului si suma totala a preturilor ordinelor.    Criteriile necesare sunt urmatoarele:
+a) Clientii trebuie sa fie mai tineri de 24 de ani
+b) Suma totala a valorilor sa nu depaseasca valoarea de 200 de dolari.
+c) Ne intereseaza doar florile care sa aiba pretul mai mic de 10 dolari.
+d) La final, sa se ordoneze view-ul dupa numele clientilor in ordine crescatoare.
+
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul pentru flori. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam culorile sa fie din urmatoarea lista de culori (roz, rosu, albastru, alb, galben, verde), iar pretul sa fie mai mare de 5 dolari.
+
+
+4 Creati o procedura care urmeaza sa insereze in tabelul flori datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Clienti. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, respectand validarile obligatorii pentru tipurile de date si cu urmatoarele validari in plus:
+
+a  ID sa fie numeric si Date_of_Birth sa fie data.
+
+b  Date_of_Birth sa fie dupa anul 1950.
+
+c  Orasele sa fie din urmatoarea lista (Bucuresti, Targu Mures, Cluj-Napoca, Brasov, Sibiu, Iasi, Braila)
+
+Afiseaza la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec
+
+
+
+----------------------------------------------
+
+CREATE TABLE Client
+(
+	client_id INT NOT NULL PRIMARY KEY,
+	client_name NVARCHAR(50) NOT NULL,
+	date_of_birth DATE NOT NULL,
+	city NVARCHAR(30) NOT NULL
+);
+
+CREATE TABLE Flower
+(
+	flower_id INT NOT NULL PRIMARY KEY,
+	flower_name NVARCHAR(50) NOT NULL,
+	flower_color NVARCHAR(20) NOT NULL,
+	flower_price DECIMAL(10,2) NOT NULL
+)
+
+CREATE TABLE Orders
+(
+	order_id INT NOT NULL PRIMARY KEY,
+	client_id INT NOT NULL ,
+	flower_id INT NOT NULL ,
+	order_quantity DECIMAL(10,2) NOT NULL,
+	order_total_price DECIMAL(10,2) NOT NULL,
+	order_date DATE NOT NULL
+
+	FOREIGN KEY (client_id) REFERENCES Client(client_id),
+	FOREIGN KEY (flower_id) REFERENCES Flower(flower_id)
+)
+
+----------------------------------------------
+
+
+2 Creati un View care sa cuprinda numele clientului si suma totala a preturilor ordinelor.    Criteriile necesare sunt urmatoarele:
+a) Clientii trebuie sa fie mai tineri de 24 de ani
+b) Suma totala a valorilor sa nu depaseasca valoarea de 200 de dolari.
+c) Ne intereseaza doar florile care sa aiba pretul mai mic de 10 dolari.
+d) La final, sa se ordoneze view-ul dupa numele clientilor in ordine crescatoare.
+
+
+CREATE VIEW client_view AS
+SELECT Client.client_name, SUM(Orders.order_total_price) AS price
+FROM Client 
+JOIN Orders ON Client.client_id = Orders.client_id
+JOIN Flower ON Orders.flower_id = Flower.flower_id
+WHERE YEAR(Client.date_of_birth) > 2000 -- a) Clientii trebuie sa fie mai tineri de 24 de ani
+  AND Flower.flower_price < 10
+GROUP BY Client.client_name
+HAVING SUM(Orders.order_total_price) <200 --suma totala a valorilor sa NU depaseasca valoare de 200 de dolari
+
+
+SELECT * FROM client_view 
+ORDER BY client_name DESC; -- sortare descrescatoare dupa pret
+
+
+----------------------------------------------
+ 
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul pentru flori. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam culorile sa fie din urmatoarea lista de culori (roz, rosu, albastru, alb, galben, verde), iar pretul sa fie mai mare de 5 dolari.
+
+
+
+CREATE FUNCTION validateFlower
+(	@flower_id NVARCHAR(20),
+	@flower_name NVARCHAR(50),
+	@flower_color  NVARCHAR(20),
+	@flower_price NVARCHAR(30))
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	set @return_value = 'true';
+
+	IF ISNUMERIC(@flower_id) <= 0    
+        SET @return_value = 'false';
+	
+	IF @flower_id = ''   
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@flower_name, '')) = 0
+        SET @return_value = 'false';
+ 	
+	IF @flower_color NOT IN ('roz', 'rosu', 'albastru', 'alb', 'galben', 'verde')
+        	SET @return_value = 0;
+
+	 -- Check for flower price greater than 5 dollars
+    	IF @flower_price <= 5.00
+        	SET @return_value = 'false';
+
+	RETURN @return_value;
+END
+
+
+----------------------------------------------
+
+4 Creati o procedura care urmeaza sa insereze in tabelul flori datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+CREATE PROCEDURE addFlower
+	@flower_id INT,
+	@flower_name NVARCHAR(50),
+	@flower_color NVARCHAR(20),
+	@flower_price DECIMAL(10,2)
+AS
+BEGIN
+	IF dbo.validateFlower(@flower_id,@flower_name, @flower_color, @flower_price) = 1
+	BEGIN
+		INSERT INTO Flower (flower_id,flower_name, flower_color, flower_price)
+		VALUES (@flower_id,@flower_name, @flower_color, @flower_price);
+		PRINT 'Flower a fost inserat cu succes.';
+	END
+	ELSE
+	BEGIN
+		PRINT 'Datele Flower nu sunt valide. Flower neinserat.';
+	END;
+END
+
+ 
+
+
+----------------------------------------------
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Clienti. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, respectand validarile obligatorii pentru tipurile de date si cu urmatoarele validari in plus:
+
+a  ID sa fie numeric si Date_of_Birth sa fie data.
+
+b  Date_of_Birth sa fie dupa anul 1950.
+
+c  Orasele sa fie din urmatoarea lista (Bucuresti, Targu Mures, Cluj-Napoca, Brasov, Sibiu, Iasi, Braila)
+
+Afiseaza la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec
+
+
+
+CREATE TRIGGER triggerInsteadOfClienti
+ON Clienti
+INSTEAD OF INSERT
+AS
+BEGIN
+    DECLARE @currentDateTime DATETIME = GETDATE();
+    
+    BEGIN TRY
+        INSERT INTO Clienti (client_id, client_name, date_of_birth, city)
+        SELECT client_id, client_name, date_of_birth, city
+        FROM inserted
+        WHERE ISNUMERIC(client_id) = 1 
+            AND ISDATE(date_of_birth) = 1 
+            AND CAST(date_of_birth AS DATE) > '1950-01-01' 
+            AND city IN ('Bucuresti', 'Targu Mures', 'Cluj-Napoca', 'Brasov', 'Sibiu', 'Iasi', 'Braila');
+        
+        -- Success message with timestamp
+        PRINT 'Data inserted successfully at ' + CONVERT(NVARCHAR(30), @currentDateTime, 121);
+    END TRY
+    BEGIN CATCH
+        -- Error message
+        PRINT 'Error inserting data!';
+    END CATCH
+END;
+
+ 
+
+
+----------------------------------------------
+
+Test BD 5
+
+Avem o baza de date care cuprinde 3 tabele: clienti, animale si ordine. Un client are un nume, o zi de nastere si o localitate. Un animal are un nume, o specie, o culoare, un model (daca este cazul) si un pret (in dolari, sa se tina cont de centi). Ordinele create de client cuprind animale de o anumita cantitate, pret total si se mentioneaza data ordinului. Un client poate crea mai multe ordine aceluiasi magazin de animale.
+
+Customer (ID, FirstName, LastName, Email, Date_of_Birth)
+Animal (ID, Name, Species, Color, Pattern, Price)
+Orders (ID, CustomerID, AnimalID, Quantity, TotalPrice, OrderDate)
+
+
+1 Creati baza de date si tabelele aferente, incluzand si cheile primare si de legatura necesare descrierii problemei.
+
+
+CREATE TABLE Customer
+(
+	customer_id INT NOT NULL PRIMARY KEY,
+	customer_first_name NVARCHAR(50) NOT NULL,
+	customer_last_name NVARCHAR(50) NOT NULL,
+	customer_email NVARCHAR(50) NOT NULL,
+	date_of_birth DATE NOT NULL 
+);
+
+CREATE TABLE Animal
+(
+	animal_id INT NOT NULL PRIMARY KEY,
+	animal_name NVARCHAR(50) NOT NULL,
+	animal_species NVARCHAR(50) NOT NULL,
+	animal_color NVARCHAR(20) NOT NULL,
+	animal_pattern NVARCHAR(20) NOT NULL,
+	animal_price DECIMAL(10,2) NOT NULL
+)
+
+CREATE TABLE Orders
+(
+	order_id INT NOT NULL PRIMARY KEY,
+	customer_id INT NOT NULL ,
+	animal_id INT NOT NULL ,
+	order_quantity DECIMAL(10,2) NOT NULL,
+	order_total_price DECIMAL(10,2) NOT NULL,
+	order_date DATE NOT NULL
+
+	FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+	FOREIGN KEY (animal_id) REFERENCES Animal(animal_id)
+)
+
+
+
+
+2 Creati un View care sa cuprinda numele clientului si suma totala a preturilor ordinelor. Criteriile necesare sunt urmatoarele:
+a   Clientii trebuie sa se fi nascut inainte de anul 1995 si sa aiba numele de familie “Johnson”.
+b   Suma totala a valorilor sa nu depaseasca valoarea de 1500 de dolari.
+c   Ne intereseaza doar animalele care sa aiba culoarea maro dar fara un model mentionat.
+d   La final, sa se ordoneze view-ul dupa numele clientilor in ordine crescatoare.
+
+
+
+CREATE VIEW view AS
+SELECT Customer.customer_last_name AS customer_last_name, SUM(Orders.order_value) AS suma
+FROM Customer
+JOIN Orders ON Orders.customer_id = Customer.customer_id
+JOIN Animal ON Orders.animal_id = Animal.animal_id
+WHERE Customer.date_of_birth < '1995-01-01'
+	AND Customer.customer_last_name = 'Johnson'
+    AND Animal.animal_color = 'maro' 
+    AND Animal.animal_pattern IS NULL
+ 
+GROUP BY Customer.customer_last_name
+HAVING SUM(Orders.order_value) < 1500
+
+SELECT * FROM view
+ORDER BY customer_last_name ASC
+
+
+
+
+
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul pentru animale. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam culorile sa fie din urmatoarea lista de culori (maro, alb, portocaliu, verde), daca au un model acesta sa fie din urmatoarea lista de modele (patat, dungat, solid), iar pretul sa fie mai mare de 50 dolari.
+
+CREATE FUNCTION validateAnimal
+(	
+	@animal_id NVARCHAR(20),
+	@animal_name NVARCHAR(50),
+	@animal_species NVARCHAR(50),
+	@animal_color NVARCHAR(20),
+	@animal_pattern NVARCHAR(20),
+	@animal_price NVARCHAR(30))
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	set @return_value = 'true';
+
+	IF ISNUMERIC(@animal_id) = 0    
+        SET @return_value = 'false';
+	
+	IF @animal_id = ''   
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@animal_name, '')) = 0
+        SET @return_value = 'false';
+
+	 -- Validate animal color and pattern against specified lists
+   	IF @animal_color NOT IN ('maro', 'alb', 'portocaliu', 'verde')
+        SET @return_value = 0;
+    
+    	IF @animal_pattern IS NOT NULL AND @animal_pattern NOT IN ('patat', 'dungat', 	'solid')
+        SET @return_value = 0;
+	
+    	-- Validate animal price greater than 50
+    	IF @animal_price <= 50.00
+        SET @return_value = 0;
+ 
+
+	RETURN @return_value;
+END
+
+ 
+
+
+4 Creati o procedura care urmeaza sa insereze in tabelul animale datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+
+CREATE PROCEDURE addAnimal
+	@animal_id INT,
+	@animal_name NVARCHAR(50),
+	@animal_species NVARCHAR(50),
+	@animal_color NVARCHAR(20),
+	@animal_pattern NVARCHAR(20),
+	@animal_price DECIMAL(10,2) 
+AS
+BEGIN
+	IF dbo.validateAnimal(@animal_id,...) = 1
+	BEGIN
+		INSERT INTO Animal (animal_id, ...)
+		VALUES (@animal_id....);
+		PRINT 'Animalul a fost inserat cu succes.';
+	END
+	ELSE
+	BEGIN
+		PRINT 'Datele animalului nu sunt valide. Animal neinserat.';
+	END;
+END
+
+
+EXEC addAnimal
+    @animal_id = 1, 
+    @animal_name = 'aaaa', 
+    ..... ;
+ 
+
+
+
+
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Clienti. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, respectand validarile obligatorii pentru tipurile de date si cu urmatoarele validari in plus:
+
+a    ID sa fie numeric si Date_of_Birth sa fie data.
+
+b    Date_of_Birth sa fie dupa anul 1960.
+
+Afiseaza la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec.
+
+ 
+
+
+ALTER TRIGGER triggerInsteadOfCustomer
+ON Customer
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @currentDateTime DATETIME = GETDATE();
+	DECLARE @customer_id INT, @customer_first_name NVARCHAR(30),
+	@customer_last_name NVARCHAR(30),
+	@customer_email NVARCHAR(30), @date_of_birth DATE;
+
+ 
+	-- luam datele din 'inserted'
+	SELECT @customer_id = customer_id, @customer_first_name = customer_first_name, @customer_last_name = customer_last_name, 
+	@customer_email = customer_email, @date_of_birth = date_of_birth FROM inserted;
+
+--a    ID sa fie numeric si Date_of_Birth sa fie data.
+
+--b    Date_of_Birth sa fie dupa anul 1960.
+
+    
+	IF ISNUMERIC(customer_id) = 1 AND ISDATE(date_of_birth) = 1
+	AND YEAR(date_of_birth) > 1960
+	 
+	BEGIN
+        INSERT INTO Customer (customer_id, customer_first_name, customer_last_name, customer_email, date_of_birth)
+        VALUES (@customer_id, @customer_first_name, @customer_last_name, @customer_email, @date_of_birth);
+        DECLARE @SuccessMessage NVARCHAR(100);
+
+		-- afisare mesaj timestamp + mesaj succes
+        SET @SuccessMessage = 'Datele au fost inserate cu succes la ' + CONVERT(NVARCHAR(30), GETDATE(), 121);
+		-- 121 - afisare data de tipul yyyy-mm-dd cu milisecunde
+		-- 20 la fel dar fara milisecunde
+        PRINT @SuccessMessage;
+ 	PRINT 'Data inserted successfully at ' + CONVERT(NVARCHAR(30), @currentDateTime, 121);
+	END
+	ELSE
+	BEGIN
+		 PRINT 'Error inserting data!';
+	END
+END
+
+
+INSERT INTO Customer ( )
+VALUES( )
+ 
+
+
+----------------------------------------------
+
+Test BD 6
+
+Avem o baza de date care cuprinde 3 tabele: clienti, animale si ordine. Un client are un nume, o zi de nastere si o localitate. Un animal are un nume, o specie, o culoare, un model (daca este cazul) si un pret (in dolari, sa se tina cont de centi). Ordinele create de client cuprind animale de o anumita cantitate, pret total si se mentioneaza data ordinului. Un client poate crea mai multe ordine aceluiasi magazin de animale.
+
+Customer (ID, FirstName, LastName, Email, Date_of_Birth)
+Animal (ID, Name, Species, Color, Pattern, Price)
+Orders (ID, CustomerID, AnimalID, Quantity, TotalPrice, OrderDate)
+
+
+
+1 Creati baza de date si tabelele aferente, incluzand si cheile primare si de legatura necesare descrierii problemei.
+
+
+
+
+
+2 Creati un View care sa cuprinda numele clientului si suma totala a preturilor ordinelor. Criteriile necesare sunt urmatoarele:
+a    Clientii trebuie sa se fi nascut inainte de anul 1990 si sa aiba numele de familie “Johnson”.
+b    Cantitatea animalelor vandute sa fie minim 3.
+c    Ne intereseaza doar animalele care sa fie din urmatoarea lista (caine, pisica, peste, pasare).
+d    La final, sa se ordoneze view-ul dupa data ordinelor create descrescator.
+
+
+ALTER VIEW customer_view AS
+--CONCAT(Customer.customer_first_name, ' ', Customer.customer_last_name) AS customer_name
+SELECT Customer.customer_first_name AS customer_first_name, Customer.customer_last_name AS customer_last_name, SUM(Orders.order_total_price) AS suma,
+Orders.order_date AS order_date
+FROM Customer
+JOIN Orders ON Orders.customer_id = Customer.customer_id
+JOIN Animal ON Orders.animal_id = Animal.animal_id
+WHERE Customer.date_of_birth < '1990-01-01'
+	AND Customer.customer_last_name = 'Johnson'
+    AND Orders.order_quantity >= 3 
+    AND Animal.animal_name IN('caine', 'pisica', 'peste', 'pasare')
+ 
+GROUP BY Customer.customer_first_name, Customer.customer_last_name, Orders.order_date
+ 
+
+SELECT * FROM customer_view
+ORDER BY  order_date DESC
+
+
+
+
+3 Creati o functie care valideaza datele necesare sa fie introduse in tabelul pentru animale. Pe langa validarea tipurilor corecte de date, ne intereseaza sa limitam speciile sa fie din urmatoarea lista de animale (caine, pisica, peste, pasare, cal, exotic), daca au un model acesta sa fie din urmatoarea lista de modele (patat, dungat, solid), iar pretul sa fie mai mare de 500 dolari.
+
+CREATE FUNCTION validateAnimal
+(	
+	@animal_id NVARCHAR(20),
+	@animal_name NVARCHAR(50),
+	@animal_species NVARCHAR(50),
+	@animal_color NVARCHAR(20),
+	@animal_pattern NVARCHAR(20),
+	@animal_price NVARCHAR(30))
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	set @return_value = 'true';
+
+	IF ISNUMERIC(@animal_id) = 0    
+        SET @return_value = 'false';
+	
+	IF @animal_id = ''   
+        SET @return_value = 'false';
+
+	IF LEN(ISNULL(@animal_name, '')) = 0
+        SET @return_value = 'false';
+
+	 -- Validate animal color and pattern against specified lists
+   	IF @animal_species NOT IN ('caine', 'pisica', 'peste', 'pasare','cal', 'exotic')
+        SET @return_value = 0;
+    
+    IF @animal_pattern IS NOT NULL AND @animal_pattern NOT IN ('patat', 'dungat', 'solid')
+        SET @return_value = 0;
+	
+    	IF @animal_price <= 500.00
+        SET @return_value = 0;
+ 
+	RETURN @return_value;
+END
+
+
+
+
+
+4 Creati o procedura care urmeaza sa insereze in tabelul animale datele necesare, date care provin din parametrii procedurii. De asemenea, procedura va trebui sa valideze datele introduse (VEZI Exercitiul 3) si sa afiseze statusul inserarii (a fost realizata cu succes sau nu?).
+
+CREATE PROCEDURE addAnimal
+	@animal_id INT,
+	@animal_name NVARCHAR(50),
+	@animal_species NVARCHAR(50),
+	@animal_color NVARCHAR(20),
+	@animal_pattern NVARCHAR(20),
+	@animal_price DECIMAL(10,2) 
+AS
+BEGIN
+	IF dbo.validateAnimal(@animal_id,@animal_name ,@animal_species  ,@animal_color  ,@animal_pattern  ,@animal_price ) = 1
+	BEGIN
+		INSERT INTO Animal (animal_id,animal_name ,animal_species  ,animal_color  ,animal_pattern  ,animal_price )
+		VALUES (@animal_id,@animal_name ,@animal_species  ,@animal_color  ,@animal_pattern  ,@animal_price );
+		PRINT 'Animalul a fost inserat cu succes.';
+	END
+	ELSE
+	BEGIN
+		PRINT 'Datele animalului nu sunt valide. Animal neinserat.';
+	END;
+END
+
+
+
+EXEC addAnimal
+    @animal_id = 1, 
+    @animal_name = 'aaaa', 
+    @animal_species='caine'  ,@animal_color='maro'  ,@animal_pattern='dungat'  ,@animal_price=670;
+ 
+
+
+
+5 Creati un trigger care se apeleaza IN LOC DE inserarea in tabelul Clienti. Acest trigger va trebui sa preia datele de inserare necesare si apoi sa le insereze corect, respectand validarile obligatorii pentru tipurile de date si cu urmatoarele validari in plus:
+
+a  ID sa fie numeric si Date_of_Birth sa fie data.
+
+b  Date_of_Birth sa fie inainte de anul 2010.
+
+c  Lungimea email-ului sa fie mai mic de 20 de caractere.
+
+Afiseaza la final un mesaj care sa cuprinda timestamp-ul inserarii datelor in caz de reusita, sau un mesaj de eroare in caz de esec.
+
+
+
+CREATE TRIGGER triggerInsteadOfCustomer
+ON Customer
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @currentDateTime DATETIME = GETDATE();
+	DECLARE @customer_id INT, @customer_first_name NVARCHAR(30),
+	@customer_last_name NVARCHAR(30),
+	@customer_email NVARCHAR(30), @date_of_birth NVARCHAR(30);
+
+ 
+	-- luam datele din 'inserted'
+	SELECT @customer_id = customer_id, @customer_first_name = customer_first_name, @customer_last_name = customer_last_name, 
+	@customer_email = customer_email, @date_of_birth = CONVERT(NVARCHAR(10), date_of_birth, 120)  FROM inserted;
+
+--a    ID sa fie numeric si Date_of_Birth sa fie data.
+
+--b    Date_of_Birth sa fie dupa anul 1960.
+
+    
+	IF ISNUMERIC(@customer_id) = 1 AND TRY_CONVERT(DATE, @date_of_birth, 120) IS NOT NULL
+        AND YEAR(TRY_CONVERT(DATE, @date_of_birth, 120)) < 2010
+	BEGIN
+        INSERT INTO Customer (customer_id, customer_first_name, customer_last_name, customer_email, date_of_birth)
+        VALUES (@customer_id, @customer_first_name, @customer_last_name, @customer_email, @date_of_birth);
+        
+ 	PRINT 'Data inserata cu succces la: ' + CONVERT(NVARCHAR(30), @currentDateTime, 121);
+	END
+	ELSE
+	BEGIN
+		 PRINT 'Error inserting data!';
+	END
+END
+
+
+INSERT INTO Customer (customer_id, customer_first_name, customer_last_name, customer_email, date_of_birth)
+VALUES (1, 'John', 'Johnson', 'john@example.com', '1985-06-15');
+
+
+
+
+----------------------------------------------
+
+
+
+
+------------------------------------------------------------------------
+
+EXERCITIU:
+
+
+Pe o tabela de Employees (care contine un ID, nume, email si salar, IDDepartment) si o tabela numita Department (ID, nume, EmployeeCount) sa se rezolve urmatoarele exercitii:
+
+CREATE TABLE Employees (
+    ID_emp INT PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(100),
+    Salary DECIMAL(10, 2),
+    IDDepartment INT,
+    FOREIGN KEY (IDDepartment) REFERENCES Department(ID_dep)
+);
+
+
+CREATE TABLE Department (
+    ID_dep INT PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    EmployeeCount INT
+);
+
+
+
+Exercise 1:  
+Write a stored procedure named GetEmployeeByID that takes an employee ID as input and returns the corresponding employee's name and salary from an "Employees" table.
+
+CREATE PROCEDURE GetEmployeeByID 
+    @EmployeeID INT
+AS
+BEGIN
+    SELECT Name, Salary
+    FROM Employees
+    WHERE ID_emp = @EmployeeID;
+END
+
+EXEC GetEmployeeByID @EmployeeID = 1;
+
+
+
+
+Exercise 2:
+Write a function named CalculateTax that calculates and returns the tax amount for a given salary. Assume a tax rate of 15%.
+
+CREATE FUNCTION CalculateTax
+(
+    @Salary DECIMAL(10, 2)
+)
+RETURNS DECIMAL(10, 2)
+AS
+BEGIN
+    DECLARE @TaxAmount DECIMAL(10, 2);
+    SET @TaxAmount = @Salary * 0.15; -- Assuming 15% tax rate
+    RETURN @TaxAmount;
+END
+
+
+
+DECLARE @Salary DECIMAL(10, 2) = 50000; -- Replace with the actual salary
+SELECT dbo.CalculateTax(@Salary) AS TaxAmount;
+
+
+
+
+Exercise 3: Create an After Insert Trigger
+Write a trigger named AfterEmployeeInsert that automatically updates the "EmployeeCount" column in a "Department" table after inserting a new record into the "Employees" table.
+
+
+CREATE TRIGGER AfterEmployeeInsert
+ON Employees
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @DepartmentID INT;
+
+    -- Get the Department ID for the newly inserted employee
+    SELECT @DepartmentID = inserted.IDDepartment
+    FROM inserted;
+
+    -- Update EmployeeCount in Department table
+    UPDATE Department
+    SET EmployeeCount = (
+        SELECT COUNT(*)
+        FROM Employees
+        WHERE IDDepartment = @DepartmentID
+    )
+    WHERE ID_dep = @DepartmentID;
+END
+
+
+
+
+
+Exercise 4: Create a Before Update Trigger
+Write a trigger named BeforeSalaryUpdate that prevents updating the "Salary" column in the "Employees" table to a value less than the current salary.
+
+CREATE TRIGGER BeforeSalaryUpdate
+ON Employees
+BEFORE UPDATE
+AS
+BEGIN
+    IF UPDATE(Salary)
+    BEGIN
+        DECLARE @NewSalary DECIMAL(10, 2), @OldSalary DECIMAL(10, 2);
+
+        SELECT @NewSalary = Salary FROM inserted;
+        SELECT @OldSalary = Salary FROM deleted;
+
+        IF @NewSalary < @OldSalary
+        BEGIN
+            RAISEERROR ('Salary cannot be updated to a value less than the current salary.', 16, 1);
+            ROLLBACK TRANSACTION; -- Optionally, rollback the transaction
+        END
+    END
+END
+
+
+
+
+Exercise 5: Create a Function with OUT Parameter
+Write a stored function named GetAverageSalary that calculates the average salary for employees in a given department. Use an OUT parameter to return the result.
+
+
+CREATE PROCEDURE GetAverageSalary 
+    @DepartmentID INT,
+    @AverageSalary DECIMAL(10, 2) OUTPUT
+AS
+BEGIN
+    SELECT @AverageSalary = AVG(Salary)
+    FROM Employees
+    WHERE IDDepartment = @DepartmentID;
+END
+
+
+DECLARE @AvgSalary DECIMAL(10, 2);
+
+EXEC GetAverageSalary @DepartmentID = 1, @AverageSalary = @AvgSalary OUTPUT;
+
+SELECT @AvgSalary AS AverageSalary;
+
+
+----------------------------------------------
+
+
+
+
+1.  	FOREIGN KEYs
+
+
+	PRIMARY KEY DUBLU
+
+--creare tabel cu cheie primara compusa
+ 
+CREATE TABLE CustomBookDesignPackage
+(
+    book_id INT NOT NULL,
+    customer_id INT NOT NULL
+    CONSTRAINT fk_book_id FOREIGN KEY(book_id) REFERENCES Books(book_id),
+    CONSTRAINT fk_customer_id FOREIGN KEY(customer_id) REFERENCES Customers(customer_id),
+    CONSTRAINT pk_custom_book_design_package PRIMARY KEY(book_id, customer_id)
+)
+
+
+
+CREATE TABLE Movie
+(
+    ID_MOVIE INT NOT NULL PRIMARY KEY,
+    NAME VARCHAR(50) NOT NULL,
+    RELEASE_DATE DATE NOT NULL
+)
+
+CREATE TABLE Actor
+(
+    ID_ACTOR INT NOT NULL  PRIMARY KEY,
+    NAME VARCHAR(50) NOT NULL,
+    DATE_OF_BIRTH DATE NOT NULL 
+)
+
+CREATE TABLE Distributions
+(
+    ID_MOVIE INT NOT NULL,
+    ID_ACTOR INT NOT NULL
+    CONSTRAINT fk_category_movie FOREIGN KEY(ID_MOVIE) REFERENCES Movie(ID_MOVIE),
+    CONSTRAINT fk_category_actor FOREIGN KEY(ID_ACTOR) REFERENCES Actor(ID_ACTOR),
+    CONSTRAINT pk_category PRIMARY KEY(ID_MOVIE, ID_ACTOR)
+)
+
+
+ 
+sau
+
+CREATE TABLE Movie
+(
+    ID_MOVIE INT NOT NULL PRIMARY KEY,
+    NAME VARCHAR(50) NOT NULL,
+    RELEASE_DATE DATE NOT NULL
+)
+
+CREATE TABLE Actor
+(
+    ID_ACTOR INT NOT NULL  PRIMARY KEY,
+    NAME VARCHAR(50) NOT NULL,
+    DATE_OF_BIRTH DATE NOT NULL 
+)
+
+CREATE TABLE Distributions
+(
+    ID_MOVIE INT NOT NULL,
+    ID_ACTOR INT NOT NULL
+    CONSTRAINT fk_category_movie FOREIGN KEY(ID_MOVIE) REFERENCES Movie(ID_MOVIE),
+    CONSTRAINT fk_category_actor FOREIGN KEY(ID_ACTOR) REFERENCES Actor(ID_ACTOR),
+    CONSTRAINT pk_category PRIMARY KEY(ID_MOVIE, ID_ACTOR)
+)
+
+
+
+
+
+
+
+
+
+
+2. EXERCITII SEMINAR 7,6,5,4?????????
+
+
+
+
+VIEW: 
+	JOIN
+	INNER JOIN
+	LEFT JOIN
+	RIGHT JOIN
+
+
+
+TRIGGERE LAB 4 EU
+	instead of insert
+	after insert
+	before insert
+	for delete
+
+CREATE TRIGGER trg_Books_Insert
+ON Books
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'INSERT';
+    DECLARE @tableName NVARCHAR(50) = 'Books';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data si ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operatie: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+CREATE TRIGGER trg_Books_Delete
+ON Books
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'DELETE';
+    DECLARE @tableName NVARCHAR(50) = 'Books';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data si ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operatie: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+Aceste triggere (trg_Books_Insert și trg_Books_Delete) vor afișa un mesaj pe ecran în momentul în care se realizează o operație de inserare sau ștergere în tabela Books. Mesajul va conține data și ora la care a avut loc operația, tipul operației (INSERT sau DELETE) și numele tabelului afectat (Books în acest caz).
+
+
+
+
+plus
+CREATE TRIGGER trg_Authors_Insert
+ON Authors
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'INSERT';
+    DECLARE @tableName NVARCHAR(50) = 'Authors';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+CREATE TRIGGER trg_Authors_Delete
+ON Authors
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'DELETE';
+    DECLARE @tableName NVARCHAR(50) = 'Authors';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+
+
+CREATE TRIGGER trg_Customers_Insert
+ON Customers
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'INSERT';
+    DECLARE @tableName NVARCHAR(50) = 'Customers';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+CREATE TRIGGER trg_Customers_Delete
+ON Customers
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'DELETE';
+    DECLARE @tableName NVARCHAR(50) = 'Customers';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK
+
+
+INSERT INTO Actor VALUES(3, 'TEST', '2023-11-11')
+DELETE Actor WHERE id_actor=3 ;
+DELETE FROM Actor WHERE id_actor=3 ;
+
+
+ALTER TABLE Actor
+ALTER COLUMN nume nvarchar(50)
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK
+
+
+
+
+
+
+
+
+

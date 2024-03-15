@@ -1,0 +1,19 @@
+Lab4 – atribuit in saptamana 7/8 cu predare in saptamana 11/12
+
+Pentru baza de date creata in laboratorul 2, raspundeti urmatoarelor cerinte: 
+	
+1. scrieti cate o procedura stocata care introduce date intr-un tabel, pentru cel putin trei tabele,
+ incluzand un tabel cu o cheie primara compusa;
+ 
+ - parametrii unei astfel de proceduri sunt atributele care descriu entitatile / relatiile din tabel, 
+  mai putin coloanele cheilor primare (exceptie facand o procedura stocata care adauga date intr-o 
+  tabela de legatura, pentru care se poate indica cheia primara);
+ 
+ - fiecare procedura va utiliza functii pentru validarea anumitor parametri; se cer cel putin trei functii user-defined (optional se pot utiliza, pe langa aceste trei functii, si functii sistem); 
+
+2. creati un view care combina date care provin din doua sau trei tabele; 
+
+3. implementati, pentru un tabel la alegere, un trigger pentru operatia de adaugare si unul pentru
+ cea de stergere; la executia fiecarui trigger se va afisa pe ecran un mesaj cu data si ora la care
+ s-a realizat operatia, tipul operatiei (Insert/Delete) si numele tabelului; optional, puteti crea
+ triggere similare si pentru alte tabele.

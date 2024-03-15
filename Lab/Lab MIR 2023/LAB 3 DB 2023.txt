@@ -1,0 +1,1420 @@
+TEMA SEMINAR 3
+
+
+USE SEM3;
+
+CREATE TABLE Categorie(
+	id_cat INT NOT NULL PRIMARY KEY,
+	nume NVARCHAR(30),
+	descriere NVARCHAR(100)
+);
+
+
+create table Publicatie(
+    id_publ int primary key not null,
+    titlu nvarchar(255),
+    abstract nvarchar(255),
+    autorp nvarchar(255),
+    id_cat int,
+    foreign key (id_cat) references Categorie(id_cat)
+)
+
+create table Biblioteca(
+    id_biblio int primary key not null,
+    nume nvarchar(255),
+    site nvarchar(255)
+)
+
+create table Indexare(
+    id_publ int not null,
+    id_biblio int not null,
+    constraint pk_indexare primary key (id_publ, id_biblio),
+    foreign key (id_biblio) references Biblioteca(id_biblio),
+    foreign key (id_publ) references Publicatie(id_publ)
+)	
+
+
+--2 c tema  
+SELECT Biblioteca.site, Biblioteca.nume
+FROM Biblioteca
+INNER JOIN Indexare ON Biblioteca.id_biblio = Indexare.id_biblio
+INNER JOIN Publicatie ON Indexare.id_publ = Publicatie.id_publ
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction';
+
+
+--2 d tema     
+SELECT DISTINCT Publicatie.autorp
+FROM Publicatie
+INNER JOIN Indexare ON Publicatie.id_publ = Indexare.id_publ 
+INNER JOIN Biblioteca ON Indexare.id_biblio = Biblioteca.id_biblio
+WHERE Biblioteca.nume = 'DBLP';
+
+select * from Biblioteca
+
+
+--3 b
+SELECT Publicatie.autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction'
+EXCEPT
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Adventure';
+
+
+--3 c
+
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Action'
+UNION
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Memoir';
+
+
+--5 c  autorii care au cel putin 2 publicatii
+SELECT autorp, COUNT(id_publ) AS 'NumarPublicatii'
+FROM Publicatie
+GROUP BY autorp
+HAVING COUNT(id_publ) >= 2
+ORDER BY 'NumarPublicatii' DESC;
+
+
+
+--5 d autorii care au cel putin o publicatie din categoria fiction
+
+SELECT DISTINCT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction';
+
+sau
+
+SELECT DISTINCT autorp, COUNT(Publicatie.id_publ) AS 'NumarPublicatiiFiction'
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction'
+GROUP BY autorp
+HAVING COUNT(Publicatie.id_publ) >= 1
+ORDER BY 'NumarPublicatiiFiction' DESC;
+
+
+--5 e  autorul cu cele mai multe publicatii
+
+SELECT TOP 1 autorp, COUNT(id_publ) AS NumarPublicatii
+FROM Publicatie
+GROUP BY autorp
+ORDER BY NumarPublicatii DESC; 
+
+sau
+
+SELECT TOP 1 autorp, MAX(NumarPublicatii) AS MaxNumarPublicatii
+FROM (
+    SELECT autorp, COUNT(id_publ) AS NumarPublicatii
+    FROM Publicatie
+    GROUP BY autorp
+) AS Subquery
+GROUP BY autorp
+ORDER BY MaxNumarPublicatii DESC;
+
+
+
+
+
+ 
+ ------------ ------------ ------------ ------------ ------------ ------------LAB 3 ------------ ------------ ------------ ------------ ------------ ------------ ------------ ------------
+
+Lab3 – atribuit in saptamana 5/6 cu predare in saptamana 7/8
+
+Pentru baza de date de la laboratorul 2, scrieti urmatoarele interogari SELECT:
+
+o interogare cu unul din operatorii UNION, INTERSECT, EXCEPT, la alegere;
+
+doua interogari cu operatorii INNER JOIN si, la alegere, LEFT JOIN, RIGHT JOIN sau FULL JOIN;
+fiecare interogare va extrage date din minim trei tabele aflate in relatie many-to-many;
+
+trei interogari cu clauza GROUP BY; una dintre acestea va contine clauza HAVING; se vor folosi
+cel putin trei operatori de agregare dintre: COUNT, SUM, AVG, MIN, MAX.
+
+optional: doua interogari imbricate – se vor folosi operatorii IN si EXISTS (interogare SELECT in clauza WHERE);
+
+Din interogarile de mai sus:
+• cel putin una va contine o conditie compusa cu AND, OR, NOT, paranteze in clauza WHERE;
+• cel putin una va utiliza DISTINCT.
+
+Observatii:
+Se poate modifica design-ul bazei de date de la laboratorul 2. 
+Interogarile trebuie sa aiba sens in contextul bazei de date si sa produca informatii relevante.
+
+ 
+
+UNION
+
+SELECT book_name AS Title, 'Book' AS Type
+FROM Books
+UNION
+SELECT author_name AS Title, 'Author' AS Type
+FROM Authors;
+
+
+
+SELECT book_id AS ID, NULL AS AuthorID, 'Book' AS Type
+FROM Books
+UNION
+SELECT NULL AS BookID, author_id AS AuthorID, 'Author' AS Type
+FROM Authors;
+
+
+
+SELECT customer_id AS EntityID, customer_name AS EntityName, 'Customer' AS EntityType
+FROM Customers
+UNION ALL
+SELECT genre_id AS EntityID, genre_name AS EntityName, 'Genre' AS EntityType
+FROM Genres;
+
+
+
+
+
+
+
+INTERSECT
+
+
+SELECT genre_id
+FROM BookGenres
+INTERSECT
+SELECT genre_id
+FROM AuthorGenres;
+
+--INSERT INTO AuthorGenres (author_id, genre_id)
+--VALUES
+--    (1, 1), -- Assuming author_id 1 is associated with genre_id 1 (common with BookGenres)
+--    (2, 2), -- Assuming author_id 2 is associated with genre_id 2 (common with BookGenres)
+--    (3, 5); -- Assuming author_id 3 is associated with genre_id 5 (common with BookGenres)
+
+SELECT G.genre_name
+FROM Genres G
+WHERE G.genre_id IN (
+    SELECT BG.genre_id
+    FROM BookGenres BG
+    INTERSECT
+    SELECT AG.genre_id
+    FROM AuthorGenres AG
+);
+
+
+
+--------------------------------------------
+inca nu face nimic
+
+SELECT customer_id
+FROM BookCustomers
+WHERE book_id IN (SELECT book_id FROM BookGenres WHERE genre_id = (SELECT genre_id FROM Genres WHERE genre_name = 'Mystery'))
+INTERSECT
+SELECT customer_id
+FROM BookCustomers
+WHERE book_id IN (SELECT book_id FROM BookGenres WHERE genre_id = (SELECT genre_id FROM Genres WHERE genre_name = 'Thriller'));
+--------------------------------------------
+
+
+
+
+EXCEPT
+
+find authors who haven't written any books
+
+SELECT author_id, author_name
+FROM Authors
+EXCEPT
+SELECT a.author_id, a.author_name
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.author_id = ba.author_id
+
+
+
+
+all authors that have written  books
+
+SELECT DISTINCT a.author_id, a.author_name
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.author_id = ba.author_id
+
+
+
+
+
+
+
+2 INNER JOIN
+
+
+SUPER
+retrieve customers and the books they purchased:
+
+SELECT c.customer_id, c.customer_name, b.book_id, b.book_name
+FROM Customers c
+INNER JOIN BookCustomers bc ON c.customer_id = bc.customer_id
+INNER JOIN Books b ON bc.book_id = b.book_id;
+
+
+SUPER
+
+retrieve the books, their genres, and the associated authors. You can achieve this by using an INNER JOIN between the "Books", "BookGenres", "Genres", "BooksAuthors", and "Authors" tables.
+
+
+SELECT b.book_name, g.genre_name, a.author_name
+FROM Books b
+INNER JOIN BookGenres bg ON b.book_id = bg.book_id
+INNER JOIN Genres g ON bg.genre_id = g.genre_id
+INNER JOIN BooksAuthors ba ON b.book_id = ba.book_id
+INNER JOIN Authors a ON ba.author_id = a.author_id;
+
+
+
+
+
+1 LEFT JOIN
+
+retrieve authors and their associated books. This will include authors who might not have any books associated with them as well:
+
+
+SELECT a.author_id, a.author_name, b.book_id, b.book_name
+FROM Authors a
+LEFT JOIN BooksAuthors ba ON a.author_id = ba.author_id
+LEFT JOIN Books b ON ba.book_id = b.book_id;
+
+
+
+
+1 RIGHT JOIN 
+
+SELECT a.author_id, a.author_name, b.book_id, b.book_name
+FROM Authors a
+RIGHT JOIN BooksAuthors ba ON a.author_id = ba.author_id
+RIGHT JOIN Books b ON ba.book_id = b.book_id;
+
+
+
+retrieve customers and the books they purchased. The query will include all the records from the "BookCustomers" table (right table) and the matching records from the "Customers" table (left table):
+
+SELECT c.customer_id, c.customer_name, b.book_id, b.book_name
+FROM Customers c
+RIGHT JOIN BookCustomers bc ON c.customer_id = bc.customer_id
+RIGHT JOIN Books b ON bc.book_id = b.book_id;
+
+
+
+
+--------------------------
+INTRE 3 TABELE many to many
+
+1. 1: INNER JOIN între tabelele Books, BookGenres și Genres
+
+SELECT Books.book_id, Books.book_title, Genres.genre_name
+FROM Books
+INNER JOIN BookGenres ON Books.book_id = BookGenres.book_id
+INNER JOIN Genres ON BookGenres.genre_id = Genres.genre_id;
+
+
+1.
+
+INNER JOIN între tabelele Books, BooksAuthors, Authors și AuthorGenres
+SELECT Books.book_id, Books.book_title, Authors.author_id, Authors.author_name, Genres.genre_id, Genres.genre_name
+FROM Books
+INNER JOIN BooksAuthors ON Books.book_id = BooksAuthors.BookID
+INNER JOIN Authors ON BooksAuthors.AuthorID = Authors.author_id
+INNER JOIN AuthorGenres ON Authors.author_id = AuthorGenres.author_id
+INNER JOIN Genres ON AuthorGenres.genre_id = Genres.genre_id;
+
+
+
+
+2: LEFT JOIN între tabelele Authors, AuthorGenres și Genres
+
+SELECT Authors.author_id, Authors.author_name, Genres.genre_name
+FROM Authors
+LEFT JOIN AuthorGenres ON Authors.author_id = AuthorGenres.author_id
+LEFT JOIN Genres ON AuthorGenres.genre_id = Genres.genre_id;
+
+
+
+
+3.RIGHT JOIN între tabelele BooksAuthors, Books și Authors
+Această interogare va extrage detalii despre cărți și autorii lor asociati, cu un RIGHT JOIN pentru a afișa toate înregistrările din tabela BooksAuthors, chiar dacă nu există o potrivire în tabelele Books și Authors.
+
+
+SELECT Books.book_id, Books.book_title, Authors.author_id, Authors.author_name
+FROM BooksAuthors
+RIGHT JOIN Books ON BooksAuthors.BookID = Books.book_id
+RIGHT JOIN Authors ON BooksAuthors.AuthorID = Authors.author_id;
+
+
+
+3. RIGHT JOIN între tabelele BookGenres, Books și Genres
+
+SELECT Books.book_id, Books.book_title, Genres.genre_id, Genres.genre_name
+FROM BookGenres
+RIGHT JOIN Books ON BookGenres.book_id = Books.book_id
+RIGHT JOIN Genres ON BookGenres.genre_id = Genres.genre_id;
+
+
+
+
+
+
+1 FULL JOIN
+
+
+
+SELECT Books.book_id, Books.book_title, Authors.author_id, Authors.author_name
+FROM Books
+LEFT JOIN BooksAuthors ON Books.book_id = BooksAuthors.BookID
+LEFT JOIN Authors ON BooksAuthors.AuthorID = Authors.author_id
+
+UNION
+
+SELECT Books.book_id, Books.book_title, Authors.author_id, Authors.author_name
+FROM Authors
+LEFT JOIN BooksAuthors ON Authors.author_id = BooksAuthors.AuthorID
+LEFT JOIN Books ON BooksAuthors.BookID = Books.book_id;
+
+
+
+
+
+
+
+
+
+
+
+fiecare interogare va extrage date din minim trei tabele aflate in relatie many-to-many;
+many-to-many -> "Books" și "Authors"
+many-to-many relationship between the Books table and the Genres  
+many-to-many relationship table between Authors and Genres
+
+
+
+3 GROUP BY
+GROUP BY pentru a număra câte cărți sunt asociate fiecărui autor:
+
+SELECT Authors.author_id, Authors.author_name, COUNT(BooksAuthors.BookID) AS TotalBooks
+FROM Authors
+LEFT JOIN BooksAuthors ON Authors.author_id = BooksAuthors.AuthorID
+GROUP BY Authors.author_id, Authors.author_name;
+
+Această interogare va afișa lista autorilor și numărul total de cărți asociate fiecărui autor, folosind GROUP BY pentru a grupa cărțile după autori și COUNT pentru a număra cărțile asociate fiecărui autor. Este o interogare simplă care utilizează GROUP BY pentru agregarea datelor.
+
+
+
+
+
+1.  GROUP BY + HAVING
+GROUP BY și HAVING pentru a afișa autorii care au scris cel puțin 3 cărți:
+
+SELECT Authors.author_id, Authors.author_name, COUNT(BooksAuthors.BookID) AS TotalBooks
+FROM Authors
+LEFT JOIN BooksAuthors ON Authors.author_id = BooksAuthors.AuthorID
+GROUP BY Authors.author_id, Authors.author_name
+HAVING COUNT(BooksAuthors.BookID) >= 3;
+
+Această interogare va afișa autorii și numărul total de cărți scrise de fiecare autor, folosind GROUP BY pentru a grupa datele după autori și COUNT pentru a număra cărțile asociate fiecărui autor. Apoi, clauza HAVING este folosită pentru a filtra rezultatele și a afișa doar autorii care au scris cel puțin 3 cărți.
+
+
+
+
+
+
+GROUP BY și HAVING pentru a afișa cărțile care au mai mult de 2 genuri asociate:
+
+SELECT Books.book_id, Books.book_title, COUNT(DISTINCT BookGenres.genre_id) AS TotalGenres
+FROM Books
+LEFT JOIN BookGenres ON Books.book_id = BookGenres.book_id
+GROUP BY Books.book_id, Books.book_title
+HAVING COUNT(DISTINCT BookGenres.genre_id) > 2;
+
+Această interogare va afișa cărțile și numărul total de genuri asociate fiecărei cărți. Se utilizează GROUP BY pentru a grupa cărțile după ID-ul și titlul cărții, iar COUNT pentru a număra numărul distinct de genuri asociate fiecărei cărți. Clauza HAVING este folosită pentru a afișa doar cărțile care au mai mult de 2 genuri asociate.
+
+
+ 
+
+se vor folosi
+cel putin trei operatori de agregare dintre: COUNT, SUM, AVG, MIN, MAX
+
+ Exemplu de interogare folosind AVG pentru a calcula media unui anumit atribut:
+
+SELECT Authors.author_id, Authors.author_name, AVG(BooksAuthors.BookID) AS AverageBooksPerAuthor
+FROM Authors
+LEFT JOIN BooksAuthors ON Authors.author_id = BooksAuthors.AuthorID
+GROUP BY Authors.author_id, Authors.author_name;
+
+Această interogare va afișa autorii și media numărului de cărți asociate fiecărui autor.
+
+
+
+
+
+Pentru a obține numărul maxim de cărți scrise de un autor și pentru a găsi cea mai ieftină carte, iată două interogări separate:
+SELECT Authors.author_id, Authors.author_name, COUNT(BooksAuthors.BookID) AS TotalBooks
+FROM Authors
+LEFT JOIN BooksAuthors ON Authors.author_id = BooksAuthors.AuthorID
+GROUP BY Authors.author_id, Authors.author_name
+HAVING COUNT(BooksAuthors.BookID) = (
+    SELECT MAX(BookCount)
+    FROM (
+        SELECT COUNT(BookID) AS BookCount
+        FROM BooksAuthors
+        GROUP BY AuthorID
+    ) AS BookCounts
+);
+
+
+Această interogare va afișa autorul sau autorii care au scris numărul maxim de cărți. Se utilizează GROUP BY pentru a număra cărțile scrise de fiecare autor, iar HAVING va filtra rezultatele pentru a afișa doar autorii cu numărul maxim de cărți.
+
+
+
+
+2. Cea mai ieftină carte:
+Presupunând că prețul cărților este stocat în tabela Books sub coloana price:
+
+SELECT book_id, book_title, MIN(price) AS MinPrice
+FROM Books
+WHERE price = (
+    SELECT MIN(price)
+    FROM Books
+);
+
+
+
+Pentru a obține suma prețurilor tuturor cărților din tabela Books, poți utiliza funcția SUM. Presupunând că prețul cărților este stocat în coloana price din tabela Books, interogarea ar arăta așa:
+
+SELECT SUM(price) AS TotalPriceOfBooks
+FROM Books;
+
+
+ the query aims to retrieve a list of authors along with their average book price, providing insights into the typical pricing trends for books written by each author in the database.
+SELECT A.author_id, A.author_name, AVG(B.book_price) AS AvgBookPrice
+FROM Authors A
+JOIN BooksAuthors BA ON A.author_id = BA.author_id
+JOIN Books B ON BA.book_id = B.book_id
+GROUP BY A.author_id, A.author_name;
+
+
+
+
+SELECT:
+
+A.author_id: It fetches the unique ID of the authors.
+A.author_name: It retrieves the names of the authors.
+AVG(B.book_price) AS AvgBookPrice: It calculates the average book price for each author based on the books they've authored.
+FROM:
+
+Authors A: It's the table alias 'A' for the 'Authors' table, storing information about authors.
+JOIN BooksAuthors BA ON A.author_id = BA.author_id: It connects the 'Authors' table with the 'BooksAuthors' table using the author IDs to find the books associated with each author.
+JOIN Books B ON BA.book_id = B.book_id: It further joins the 'Books' table to fetch details of the books written by the authors, based on the book IDs in the 'BooksAuthors' table.
+GROUP BY:
+
+A.author_id, A.author_name: It groups the result set by each author's unique ID and their name. This arrangement helps aggregate the books and calculate the average book price for each author.
+AVG(B.book_price) AS AvgBookPrice:
+
+This part computes the average book price for each author by considering all the book prices written by each author. The AVG() function calculates the average based on the book prices in the 'Books' table, associated with each author through the 'BooksAuthors' table.
+
+
+
+4. doua interogari imbricate – se vor folosi operatorii IN si EXISTS (interogare SELECT in clauza WHERE);
+Exemplu de interogare imbricată folosind operatorul IN:
+Interogare care selectează cărțile care au genurile specificate:
+
+SELECT book_id, book_name
+FROM Books
+WHERE book_id IN (
+    SELECT book_id
+    FROM BookGenres
+    WHERE genre_id IN (
+        SELECT genre_id
+        FROM Genres
+        WHERE genre_name IN ('History')
+    )
+);
+
+
+
+Exemplu de interogare imbricată folosind operatorul EXISTS:
+Interogare care selectează autorii care sunt și în relație cu un anumit gen:
+
+
+SELECT author_id, author_name
+FROM Authors AS A
+WHERE EXISTS (
+    SELECT author_id
+    FROM AuthorGenres AS AG
+    WHERE AG.author_id = A.author_id
+    AND AG.genre_id = (
+        SELECT genre_id
+        FROM Genres
+        WHERE genre_name = 'Fantasy'
+    )
+);
+
+
+
+
+Exemplu 1: Utilizarea DISTINCT și a unei condiții compuse cu AND:
+ 
+SELECT DISTINCT B.book_name, B.year_of_appearance
+FROM BooksAuthors BA
+JOIN Books B ON BA.book_id = B.book_id
+JOIN Authors A ON BA.author_id = A.author_id
+WHERE A.author_name = 'Stephen King' AND B.year_of_appearance > 2000;
+
+
+
+
+
+
+Exemplu 3: Utilizarea DISTINCT și a unei condiții compuse cu NOT și paranteze:
+ 
+
+SELECT DISTINCT A.author_name, G.genre_name
+FROM Authors A
+JOIN AuthorGenres AG ON A.author_id = AG.author_id
+JOIN Genres G ON AG.genre_id = G.genre_id
+WHERE NOT (G.genre_name = 'Mystery' AND A.author_name = 'Agatha Christie');
+
+
+
+Din interogarile de mai sus:
+• cel putin una va contine o conditie compusa cu AND, OR, NOT, paranteze in clauza WHERE;
+• cel putin una va utiliza DISTINCT.
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------
+
+
+NU merg aici
+
+Interogare 1: Utilizarea DISTINCT și a unei condiții compuse cu AND:
+ 
+SELECT DISTINCT genre_id
+FROM Genres
+WHERE genre_name = 'Adventure' AND genre_description LIKE '%exciting%';
+
+
+Interogare 2: Utilizarea DISTINCT și a unei condiții compuse cu OR:
+ 
+SELECT DISTINCT author_id
+FROM Authors
+WHERE author_name = 'Stephen King' OR author_country = 'USA';
+
+
+
+Interogare 3: Utilizarea DISTINCT și a unei condiții compuse cu NOT și paranteze:
+SELECT DISTINCT book_id, book_title
+FROM Books
+WHERE NOT (book_language = 'English' AND book_publication_year > 2020);
+
+
+---------------------------------------------
+
+
+
+
+
+ 
+
+QUERY BUN
+use STORE;
+-- Query using UNION to get a list of unique authors and genres
+SELECT author_name FROM Authors
+UNION
+SELECT genre_name FROM Genres;
+
+-- Query using UNION to get a list of unique authors and genres
+--SELECT author_name AS BABABA, NULL AS Genre FROM Authors
+--UNION
+--SELECT NULL AS Name, genre_name AS LALALA FROM Genres;
+
+
+-- Union between Genres and Books
+SELECT genre_id AS ID, genre_name AS Name
+FROM Genres
+UNION ALL
+SELECT book_id, book_name 
+FROM Books;
+
+--SELECT book_id, book_name, book_price   nu merge daca sunt mai multe field uri
+
+
+-- NU E BUNA DE FACU EU UNA
+-- Intersectie intre tabelele Genres si Books pe baza numelor
+--SELECT genre_name AS Name
+--FROM Genres
+--INTERSECT
+--SELECT book_name
+--FROM Books;
+
+
+ -- una cu except
+
+
+
+
+SELECT b.book_name, a.author_name, g.genre_name
+FROM Books b
+INNER JOIN BooksAuthors ba ON b.book_id = ba.book_id
+INNER JOIN Authors a ON ba.author_id = a.author_id
+INNER JOIN BookGenres bg ON b.book_id = bg.book_id
+INNER JOIN Genres g ON bg.genre_id = g.genre_id;
+
+
+SELECT c.customer_name, b.book_name, cb.purchase_date
+FROM Customers c
+INNER JOIN BookCustomers bc ON c.customer_id = bc.customer_id
+INNER JOIN Books b ON bc.book_id = b.book_id
+INNER JOIN CustomerBooks cb ON c.customer_id = cb.customer_id AND b.book_id = cb.book_id;
+
+
+SELECT a.author_name, b.book_name
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.author_id = ba.author_id
+INNER JOIN Books b ON ba.book_id = b.book_id;
+
+
+SELECT a.author_name, COUNT(ba.book_id) AS NumberOfBooks
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.author_id = ba.author_id
+GROUP BY a.author_name;
+
+-- sunt la fel astea 2
+SELECT a.author_name, COUNT(ba.book_id) AS NumberOfBooks
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.author_id = ba.author_id
+GROUP BY a.author_name
+HAVING COUNT(ba.book_id) >= 1;
+-- de dat print si la ce carti are
+
+
+
+
+
+to count the number of books each author has written
+
+SELECT A.author_id, A.author_name, COUNT(BA.book_id) AS TotalBooksWritten
+FROM Authors A
+LEFT JOIN BooksAuthors BA ON A.author_id = BA.author_id
+GROUP BY A.author_id, A.author_name;
+
+
+
+
+SELECT g.genre_name, AVG(b.book_price) AS AveragePrice, SUM(b.book_price) AS TotalPrice
+FROM Genres g
+INNER JOIN BookGenres bg ON g.genre_id = bg.genre_id
+INNER JOIN Books b ON bg.book_id = b.book_id
+GROUP BY g.genre_name;
+
+
+SELECT a.author_name, MIN(b.year_of_appearance) AS OldestBookYear
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.author_id = ba.author_id
+INNER JOIN Books b ON ba.book_id = b.book_id
+GROUP BY a.author_name;
+
+
+SELECT g.genre_name, MAX(b.book_price) AS HighestPrice
+FROM Genres g
+INNER JOIN BookGenres bg ON g.genre_id = bg.genre_id
+INNER JOIN Books b ON bg.book_id = b.book_id
+GROUP BY g.genre_name;
+
+
+
+
+Interogare pentru a afișa cel mai mare preț al cărților pentru fiecare gen:
+
+SELECT g.genre_name, MAX(b.book_price) AS HighestPrice
+FROM Genres g
+INNER JOIN BookGenres bg ON g.genre_id = bg.genre_id
+INNER JOIN Books b ON bg.book_id = b.book_id
+GROUP BY g.genre_name;
+
+Această interogare utilizează MAX pentru a găsi cel mai mare preț al cărților pentru fiecare gen. Utilizează GROUP BY pentru a grupa rezultatele după numele genului.
+
+
+
+Interogare pentru a afișa cea mai veche carte scrisă de fiecare autor:
+
+SELECT a.AuthorName, MIN(b.YearOfAppearance) AS OldestBookYear
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.AuthorID = ba.AuthorID
+INNER JOIN Books b ON ba.BookID = b.BookID
+GROUP BY a.AuthorName;
+
+Această interogare utilizează MIN pentru a găsi cea mai veche carte scrisă de fiecare autor. Folosește GROUP BY pentru a grupa rezultatele după numele autorului.
+
+
+
+
+SELECT customer_name
+FROM Customers
+WHERE customer_id IN (
+    SELECT DISTINCT customer_id
+    FROM BookCustomers
+    WHERE book_id IN (
+        SELECT book_id
+        FROM Books
+        WHERE year_of_appearance = (SELECT MAX(year_of_appearance) FROM Books)
+    )
+);
+
+
+
+SELECT author_name
+FROM Authors a
+WHERE EXISTS (
+    SELECT *
+    FROM BooksAuthors ba
+    WHERE ba.author_id = a.author_id
+    AND ba.book_id IN (
+        SELECT book_id
+        FROM BookGenres bg
+        WHERE bg.genre_id = (SELECT genre_id FROM Genres WHERE genre_name = 'Mystery')
+    )
+);
+
+
+SELECT book_name, year_of_appearance
+FROM Books
+WHERE (year_of_appearance < 2010 OR year_of_appearance > 2020)
+AND NOT (book_id IN (
+    SELECT book_id
+    FROM BookGenres
+    WHERE genre_id = (
+        SELECT genre_id
+        FROM Genres
+        WHERE genre_name = 'Fantasy'
+    )
+));
+
+
+SELECT DISTINCT genre_name
+FROM Genres;
+
+
+SELECT DISTINCT a.author_name
+FROM Authors a
+WHERE EXISTS (
+    SELECT *
+    FROM BooksAuthors ba
+    WHERE ba.author_id = a.author_id
+    AND ba.book_id IN (
+        SELECT book_id
+        FROM BookGenres bg
+        WHERE bg.genre_id = (
+            SELECT genre_id
+            FROM Genres
+            WHERE genre_name = 'Science Fiction'
+        )
+    )
+);
+
+
+
+Această interogare va selecta titlurile cărților și anul apariției acestora din tabela Books care respectă următoarele condiții:
+
+Anul apariției cărții trebuie să fie mai mic de 2010 sau mai mare de 2020.
+În plus, nu trebuie să facă parte din genul 'Fantasy', conform informațiilor din tabelele Genres și BookGenres.
+Aceasta utilizează operatori logici (AND, OR, NOT) și paranteze pentru a defini condițiile complexe în clauza WHERE.
+
+
+SELECT book_name, year_of_appearance
+FROM Books
+WHERE (year_of_appearance < 2010 OR year_of_appearance > 2020)
+AND NOT (book_id IN (
+    SELECT book_id
+    FROM BookGenres
+    WHERE genre_id = (
+        SELECT genre_id
+        FROM Genres
+        WHERE genre_name = 'Fantasy'
+    )
+));
+
+
+
+Interogare folosind IN:
+
+SELECT customer_name
+FROM Customers
+WHERE customer_id IN (
+    SELECT DISTINCT customer_id
+    FROM BookCustomers
+    WHERE book_id IN (
+        SELECT book_id
+        FROM Books
+        WHERE year_of_appearance = (SELECT MAX(year_of_appearance) FROM Books)
+    )
+);
+
+Această interogare va selecta numele ale clienților care au cumpărat cel puțin o carte apărută în anul cu cea mai recentă apariție.
+
+
+
+
+
+
+DE VAZUT CE FACE
+
+SELECT Authors.author_id, Authors.author_name, COUNT(BooksAuthors.book_id) AS BookCount
+FROM Authors
+LEFT JOIN BooksAuthors ON Authors.author_id = BooksAuthors.author_id
+GROUP BY Authors.author_id, Authors.author_name
+HAVING COUNT(BooksAuthors.book_id) = (
+    SELECT MAX(BookCount)
+    FROM (
+        SELECT COUNT(book_id) AS BookCount
+        FROM BooksAuthors AS BA
+        WHERE BA.author_id = Authors.author_id
+        GROUP BY BA.author_id
+    ) AS BookCounts
+);
+--The query joins the 'Authors' table with the 'BooksAuthors' table based on the author IDs.
+--It calculates the count of books for each author and filters the results to show only those
+--authors who have the maximum count of books written.
+--This revised query uses a correlated subquery that operates on each author 
+--separately, comparing the count of books written by each author to the maximum count.
+
+
+
+---------------------------------------------------------
+
+
+TEMA SEMINAR 3 BAZE 
+
+
+
+
+--2 c tema   gresit????????????
+SELECT Biblioteca.site,Biblioteca.nume 
+FROM Biblioteca
+INNER JOIN  Indexare on Biblioteca.id_biblio = Indexare.id_biblio
+WHERE nume = 'jurnal'
+
+--2 c tema   corect
+SELECT Biblioteca.site, Biblioteca.nume
+FROM Biblioteca
+INNER JOIN Indexare ON Biblioteca.id_biblio = Indexare.id_biblio
+INNER JOIN Publicatie ON Indexare.id_publ = Publicatie.id_publ
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction';
+
+
+--2 d tema       SELECT DISTINCT
+SELECT Publicatie.autorp
+FROM Publicatie
+INNER JOIN Indexare ON Publicatie.id_publ = Indexare.id_publ   --- merge si invers
+INNER JOIN Biblioteca ON Indexare.id_biblio = Biblioteca.id_biblio
+WHERE Biblioteca.nume = 'DBLP';
+
+
+select * from Biblioteca
+
+
+--3 b
+SELECT Publicatie.autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction'
+EXCEPT
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Adventure';
+
+
+--3 c
+
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Action'
+UNION
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Memoir';
+
+--5 c  autorii care au cel putin 2 publicatii
+SELECT autorp, COUNT(id_publ) AS 'NumarPublicatii'
+FROM Publicatie
+GROUP BY autorp
+HAVING COUNT(id_publ) >= 2
+ORDER BY 'NumarPublicatii' DESC;
+
+--5 d autorii care au cel putin o publicatie din categoria fiction
+SELECT DISTINCT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction';
+
+
+--5 e  autorul cu cele mai multe publicatii
+
+SELECT autorp, COUNT(id_publ) AS 'NumarPublicatii'
+FROM Publicatie
+GROUP BY autorp
+ORDER BY 'NumarPublicatii' DESC
+--LIMIT 1 nu suporta
+
+
+SELECT autorp, COUNT(id_publ) AS NumarPublicatii
+FROM Publicatie
+GROUP BY autorp
+ORDER BY NumarPublicatii DESC, autorp; -- nu face desc
+
+
+
+
+SELECT TOP 1 autorp, MAX(NumarPublicatii) AS MaxNumarPublicatii
+FROM (
+    SELECT autorp, COUNT(id_publ) AS NumarPublicatii
+    FROM Publicatie
+    GROUP BY autorp
+) AS Subquery
+GROUP BY autorp
+ORDER BY MaxNumarPublicatii DESC;
+
+ 
+--sau
+
+WITH RankedAuthors AS (
+    SELECT autorp, COUNT(id_publ) AS NumarPublicatii,
+           RANK() OVER (ORDER BY COUNT(id_publ) DESC) AS RankOrder
+    FROM Publicatie
+    GROUP BY autorp
+)
+SELECT autorp, NumarPublicatii
+FROM RankedAuthors
+WHERE RankOrder = 1;
+
+
+--'jurnal' = 'Fiction' la noi
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------
+
+ 
+
+ Query using UNION:
+Retrieve a list of unique authors and genres using the UNION operator.
+
+sql
+Copy code
+-- Query using UNION to get a list of unique authors and genres
+SELECT AuthorName FROM Authors
+UNION
+SELECT GenresName FROM Genres;
+
+
+
+2. Queries using INNER JOIN and LEFT JOIN:
+Retrieve data from multiple tables using INNER JOIN and LEFT JOIN.
+
+-- Query using INNER JOIN to retrieve books, authors, and their associated genres
+SELECT Books.BookTitle, Authors.AuthorName, Genres.GenresName
+FROM Books
+INNER JOIN BooksAuthors ON Books.BookID = BooksAuthors.BookID
+INNER JOIN Authors ON BooksAuthors.AuthorID = Authors.AuthorID
+INNER JOIN BookGenres ON Books.BookID = BookGenres.BookID
+INNER JOIN Genres ON BookGenres.GenreID = Genres.GenreID;
+
+-- Query using LEFT JOIN to retrieve books and associated customers who purchased them
+SELECT Books.BookTitle, Customers.CustomerName
+FROM Books
+LEFT JOIN BookCustomers ON Books.BookID = BookCustomers.BookID
+LEFT JOIN Customers ON BookCustomers.CustomerID = Customers.CustomerID;
+
+
+
+3. Queries using GROUP BY and HAVING:
+Aggregate data using GROUP BY with different aggregate functions and HAVING clause.
+
+-- Query using GROUP BY to get the count of books per author
+SELECT Authors.AuthorName, COUNT(*) AS NumberOfBooks
+FROM Authors
+INNER JOIN BooksAuthors ON Authors.AuthorID = BooksAuthors.AuthorID
+GROUP BY Authors.AuthorName;
+
+-- Query using GROUP BY and HAVING to get the total price of books per customer having spent more than $100
+SELECT Customers.CustomerID, SUM(Books.BookPrice) AS TotalPurchase
+FROM Customers
+INNER JOIN BookCustomers ON Customers.CustomerID = BookCustomers.CustomerID
+INNER JOIN Books ON BookCustomers.BookID = Books.BookID
+GROUP BY Customers.CustomerID
+HAVING SUM(Books.BookPrice) > 100;
+
+-- Query using GROUP BY to find the average year of appearance per genre
+SELECT Genres.GenresName, AVG(Books.YearOfAppearance) AS AvgYearOfAppearance
+FROM Genres
+INNER JOIN BookGenres ON Genres.GenreID = BookGenres.GenreID
+INNER JOIN Books ON BookGenres.BookID = Books.BookID
+GROUP BY Genres.GenresName;
+
+
+
+
+
+4. Optional: Queries with IN and EXISTS:
+
+-- Query using EXISTS to retrieve customers who bought books and are also in the Customers table
+SELECT CustomerName
+FROM Customers C
+WHERE EXISTS (
+    SELECT 1
+    FROM BookCustomers BC
+    WHERE BC.CustomerID = C.CustomerID
+);
+
+-- Query using IN to retrieve books that fall under a specific genre
+SELECT BookTitle
+FROM Books
+WHERE BookID IN (
+    SELECT BookID
+    FROM BookGenres
+    WHERE GenreID = 3 -- Change '3' to the desired genre ID
+);
+
+
+ 
+
+
+
+
+Union between Customer and BookCustomer:
+This will combine the customer information with the book purchases.
+
+SELECT 'Customer' AS DataType, CustomerID AS ID, CustomerName AS Name, CustomerEmail AS Email FROM Customers
+UNION ALL
+SELECT 'BookCustomer', CustomerID, NULL, NULL FROM BookCustomers;
+
+
+
+
+
+. Union between Books and Authors:
+This will list books alongside their respective authors.
+
+
+SELECT 'Books' AS DataType, BookID AS ID, BookTitle AS Title, BookPrice, YearOfAppearance FROM Books
+UNION ALL
+SELECT 'Authors', AuthorID, AuthorName, NULL, NULL FROM Authors;
+
+
+
+
+Union between BooksAuthors and Genres:
+This could be used to combine information about which book is associated with which author and the genres.
+
+SELECT 'BooksAuthors' AS DataType, BookID, AuthorID, NULL, NULL FROM BooksAuthors
+UNION ALL
+SELECT 'BookGenres', BookID, GenreID, NULL, NULL FROM BookGenres;
+
+
+
+
+
+
+
+
+
+Pentru a realiza interogări folosind operatorii INNER JOIN pentru a extrage date din minim trei tabele aflate în relație many-to-many, iată câteva exemple de interogări:
+
+Interogare pentru a obține informații despre cărți, autori și genuri asociate acestora:
+
+
+SELECT b.BookTitle, a.AuthorName, g.GenresName
+FROM Books b
+INNER JOIN BooksAuthors ba ON b.BookID = ba.BookID
+INNER JOIN Authors a ON ba.AuthorID = a.AuthorID
+INNER JOIN BookGenres bg ON b.BookID = bg.BookID
+INNER JOIN Genres g ON bg.GenreID = g.GenreID;
+
+
+
+
+
+
+
+
+Interogare pentru a afișa cărțile achiziționate de anumitul client:
+
+SELECT c.CustomerName, b.BookTitle, cb.purchase_date
+FROM Customers c
+INNER JOIN BookCustomers bc ON c.CustomerID = bc.CustomerID
+INNER JOIN Books b ON bc.BookID = b.BookID
+INNER JOIN CustomerBooks cb ON c.CustomerID = cb.customer_id AND b.BookID = cb.book_id;
+Această interogare utilizează INNER JOIN pentru a afișa cărțile achiziționate de un anumit client din tabelele Customers, BookCustomers, Books și CustomerBooks.
+
+
+
+
+
+Interogare pentru a obține cărțile scrise de un anumit autor:
+
+SELECT a.AuthorName, b.BookTitle
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.AuthorID = ba.AuthorID
+INNER JOIN Books b ON ba.BookID = b.BookID;
+
+Această interogare utilizează INNER JOIN pentru a afișa cărțile scrise de un anumit autor din tabelele Authors, BooksAuthors și Books.
+
+Fiecare interogare combină mai multe tabele folosind INNER JOIN pentru a obține informații din relațiile many-to-many definite între tabelele respective.
+
+
+
+
+
+
+
+Interogare pentru a obține numărul de cărți scrise de fiecare autor:
+
+SELECT a.AuthorName, COUNT(ba.BookID) AS NumberOfBooks
+FROM Authors a
+INNER JOIN BooksAuthors ba ON a.AuthorID = ba.AuthorID
+GROUP BY a.AuthorName;
+Această interogare utilizează COUNT pentru a număra câte cărți a scris fiecare autor. Folosește GROUP BY pentru a grupa rezultatele după numele autorului.
+
+
+
+
+Interogare pentru a calcula media și suma prețurilor cărților pentru fiecare gen:
+
+SELECT g.GenresName, AVG(b.BookPrice) AS AveragePrice, SUM(b.BookPrice) AS TotalPrice
+FROM Genres g
+INNER JOIN BookGenres bg ON g.GenreID = bg.GenreID
+INNER JOIN Books b ON bg.BookID = b.BookID
+GROUP BY g.GenresName;
+
+
+Această interogare utilizează AVG și SUM pentru a calcula prețul mediu și suma prețurilor cărților pentru fiecare gen. Utilizează GROUP BY pentru a grupa rezultatele după numele genului.
+
+
+
+
+ 
+------------------------------
+
+
+SEMINAR 3 COMPLET CU COMENTARII
+
+USE SEM3;
+
+CREATE TABLE Categorie(
+	id_cat INT NOT NULL PRIMARY KEY,
+	nume NVARCHAR(30),
+	descriere NVARCHAR(100)
+);
+
+
+create table Publicatie(
+    id_publ int primary key not null,
+    titlu nvarchar(255),
+    abstract nvarchar(255),
+    autorp nvarchar(255),
+    id_cat int,
+    foreign key (id_cat) references Categorie(id_cat)
+)
+
+create table Biblioteca(
+    id_biblio int primary key not null,
+    nume nvarchar(255),
+    site nvarchar(255)
+)
+
+create table Indexare(
+    id_publ int not null,
+    id_biblio int not null,
+    constraint pk_indexare primary key (id_publ, id_biblio),
+    foreign key (id_biblio) references Biblioteca(id_biblio),
+    foreign key (id_publ) references Publicatie(id_publ)
+)	
+
+
+select Publicatie.titlu,Categorie.nume 
+from Publicatie
+inner join  Categorie on Publicatie.id_cat = Categorie.id_cat
+where autorp = 'Roman Raul Ion'
+
+
+select Publicatie.titlu
+from Publicatie
+left join Indexare on Publicatie.id_publ = Indexare.id_publ
+
+
+--2 c tema   corect
+SELECT Biblioteca.site, Biblioteca.nume
+FROM Biblioteca
+INNER JOIN Indexare ON Biblioteca.id_biblio = Indexare.id_biblio
+INNER JOIN Publicatie ON Indexare.id_publ = Publicatie.id_publ
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction';
+
+
+--2 d tema       SELECT DISTINCT
+SELECT Publicatie.autorp
+FROM Publicatie
+INNER JOIN Indexare ON Publicatie.id_publ = Indexare.id_publ   --- merge si invers
+INNER JOIN Biblioteca ON Indexare.id_biblio = Biblioteca.id_biblio
+WHERE Biblioteca.nume = 'DBLP';
+
+
+select * from Biblioteca
+
+
+
+select autorp from Publicatie
+inner join Categorie on Publicatie.id_cat=Categorie.id_cat
+where Categorie.nume = 'Fiction'
+union
+select autorp from Publicatie
+inner join Categorie on Publicatie.id_cat=Categorie.id_cat
+where Categorie.nume = 'Adventure'
+
+
+select autorp, count(id_publ) as 'publicatii' from Publicatie
+group by autorp
+order by 'publicatii' desc
+--order by publicatii desc -- merge si fara '' aici la alias
+--order by autorp desc
+
+select autorp, count(id_publ) as 'publicatii' from Publicatie
+inner join Categorie on Publicatie.id_cat = Categorie.id_cat
+where Categorie.nume='fictiune'
+group by autorp
+
+
+
+--3 b
+SELECT Publicatie.autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction'
+EXCEPT
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Adventure';
+
+
+--3 c
+
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Action'
+UNION
+SELECT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Memoir';
+
+--5 c  autorii care au cel putin 2 publicatii
+SELECT autorp, COUNT(id_publ) AS 'NumarPublicatii'
+FROM Publicatie
+GROUP BY autorp
+HAVING COUNT(id_publ) >= 2
+ORDER BY 'NumarPublicatii' DESC;
+
+--5 d autorii care au cel putin o publicatie din categoria fiction
+SELECT DISTINCT autorp
+FROM Publicatie
+INNER JOIN Categorie ON Publicatie.id_cat = Categorie.id_cat
+WHERE Categorie.nume = 'Fiction';
+
+
+--5 e  autorul cu cele mai multe publicatii
+
+SELECT autorp, COUNT(id_publ) AS 'NumarPublicatii'
+FROM Publicatie
+GROUP BY autorp
+ORDER BY 'NumarPublicatii' DESC
+--LIMIT 1 nu suporta
+
+
+SELECT autorp, COUNT(id_publ) AS NumarPublicatii
+FROM Publicatie
+GROUP BY autorp
+ORDER BY NumarPublicatii DESC, autorp; -- nu face desc
+
+
+
+
+SELECT TOP 1 autorp, MAX(NumarPublicatii) AS MaxNumarPublicatii
+FROM (
+    SELECT autorp, COUNT(id_publ) AS NumarPublicatii
+    FROM Publicatie
+    GROUP BY autorp
+) AS Subquery
+GROUP BY autorp
+ORDER BY MaxNumarPublicatii DESC;
+
+ 
+--sau
+
+WITH RankedAuthors AS (
+    SELECT autorp, COUNT(id_publ) AS NumarPublicatii,
+           RANK() OVER (ORDER BY COUNT(id_publ) DESC) AS RankOrder
+    FROM Publicatie
+    GROUP BY autorp
+)
+SELECT autorp, NumarPublicatii
+FROM RankedAuthors
+WHERE RankOrder = 1;
+
+
+--'jurnal' = 'Fiction' la noi
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+

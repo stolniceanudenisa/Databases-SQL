@@ -1,0 +1,12 @@
+Lab2 – atribuit in saptamana 3/4 cu predare in saptamana 5/6
+
+Scrieti comenzi SQL pentru: 
+
+- inserare de date (pentru toate tabelele), 
+- modificare de date (pentru cel putin un tabel) si
+- stergere de date (pentru cel putin un tabel).
+
+In comenzile de modificare / stergere folositi cel putin o data în clauza WHERE:
+	- operatori logici (AND, OR, NOT)
+	- operatori relationali (<, <=, =, >, >=, <>)
+	- IS [NOT] NULL

@@ -1,0 +1,880 @@
+
+
+-- Books
+INSERT INTO Books (book_name, book_price, year_of_appearance)
+VALUES
+    ('Heads You Lose', 45, 2011),
+    ('Good Omens', 55, 1996),
+    ('The Great Gatsby', 14.99, 1925),
+    ('Pride and Prejudice', 12.50, 1813),
+    ('1984', 9.99, 1949),
+    ('The Catcher in the Rye', 11.25, 1951),
+    ('The Hobbit', 16.75, 1937);
+
+
+-- Authors
+INSERT INTO Authors (author_name)
+VALUES
+    ('Lisa Lutz'),
+    ('David Hayward'),
+    ('Neil Gaiman'),
+    ('Terry Pratchett';
+
+
+-- BookAuthors
+INSERT INTO BooksAuthors (book_id, author_id)
+VALUES
+    (4, 1),
+    (4, 2),
+    (5, 3),
+    (5, 4);
+
+-- Customers
+INSERT INTO Customers (customer_id, customer_name)
+VALUES
+    (1, 'Alex'),
+    (2, 'Andrei'),
+    (3, 'Ioana'),
+    (4, 'Maria'),
+    (5, 'Andreea'),
+    (6, 'Iulia');
+
+
+INSERT INTO Genres (genre_name)
+VALUES
+    ('Classic'),
+    ('Literary Fiction'),
+    ('Science Fiction'),
+    ('Historical'),
+    ('Thriller');
+
+
+
+-- BookGenres
+INSERT INTO BookGenres (book_id, genre_id)
+VALUES
+    (4, 5),
+    (5, 2),
+    (6, 1),
+    (7, 1),
+    (8, 3),
+    (9, 2),
+    (10, 2);
+
+-- BookCustomers
+INSERT INTO BookCustomers (book_id, customer_id)
+VALUES
+    (4, 1),
+    (5, 2),
+    (4, 3),
+    (4, 4),
+    (4, 5),
+    (5, 6),
+    (8, 1),
+    (6, 1),
+    (10, 2),
+    (9, 2),
+    (7, 3);
+
+ 
+
+
+-- CustomerBooks
+INSERT INTO CustomerBooks ( customer_id, book_id, purchase_date)
+VALUES
+    (1, 4, '2023-10-01'),
+    (2, 5, '2023-09-15'),
+    (3, 4, '2023-10-05'),
+    (4, 4, '2023-09-20'),
+    (5, 4, '2023-09-10'),
+    (6, 5, '2023-09-10'),
+    (1, 8, '2023-10-01'),
+    (1, 6, '2023-06-12'),
+    (2, 10, '2023-11-22'),
+    (2, 9, '2023-03-25'),
+    (3, 7, '2023-06-16');
+
+
+
+INSERT INTO BookGenres (book_id, genre_id)
+VALUES
+    (4, 5), -- BookID 4 (Heads You Lose) is associated with GenreID 5
+    (5, 2), 
+    (6, 1),
+    (7, 1),
+    (8, 3),
+    (9, 2),
+    (10, 1);
+
+
+ 
+INSERT INTO Books (book_name, book_price, year_of_appearance)
+VALUES
+    ('Carte_de_sters', 99, 2000)
+
+DELETE FROM Books
+WHERE book_name = 'Carte_de_sters';
+
+
+
+
+DELETE FROM Books
+WHERE book_price > 40;
+
+
+DELETE FROM Genres;
+
+DROP TABLE Authors;
+
+
+DELETE FROM Customers
+WHERE customer_name IS NULL OR customer_id NOT IN (SELECT DISTINCT customer_id FROM CustomerBooks);
+
+
+DELETE FROM Books
+WHERE year_of_appearance >= 2015
+  AND book_price < 50.0;
+
+
+DELETE FROM BookCustomers
+WHERE book_id = 4 AND customer_id IN (3, 4);
+
+
+UPDATE Books
+SET book_price = 50
+WHERE book_id > 4;
+
+
+UPDATE Books
+SET book_price = book_price * 2.5
+WHERE book_price < 15.0;
+
+
+UPDATE Books
+SET year_of_appearance = year_of_appearance + 1
+WHERE book_price < 20;
+
+
+UPDATE Customers
+SET customer_name = 'Nedenumit'
+WHERE customer_name IS NULL;
+
+
+
+--Modificarea prețului cărților publicate înainte de 2000 pentru clienți cu numele "John Doe":
+UPDATE Books
+SET book_price = book_price * 1.1  -- Crește prețul cu 10%
+
+
+ 
+-- Alter the BooksAuthors table to make BookID and AuthorID columns not nullable
+ALTER TABLE BooksAuthors
+ALTER COLUMN book_id INT NOT NULL
+
+
+-- Alter the BookCustomers table to make BookID and CustomerID columns not nullable
+ALTER TABLE BookCustomers
+ALTER COLUMN customer_id INT NOT NULL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1) comenzi SQL pentru: 
+
+inserare de date (pentru toate tabelele),
+modificare de date (pentru cel putin un tabel) si
+stergere de date (pentru cel putin un tabel).
+
+2) INTEROGARI
+
+
+
+
+
+author_name	author_id
+Lisa Lutz	1
+David Hayward 	2
+Neil Gaiman	3
+Terry Pratchett	4
+
+
+book_customer_id	book_id	customer_id
+1	4	1
+2	5	2
+3	4	3
+4	4	4
+5	4	5
+6	5	6
+7	8	1
+8	6	1
+9	10	2
+10	9	2
+11	7	3
+
+
+
+book_genre_ID	book_id	genre_id
+1	4	5
+2	5	2
+3	6	1
+4	7	1
+5	8	3
+6	9	2
+7	10	2
+
+
+
+
+book_name	book_price	year_of_appearance	book_id
+Heads You Lose	45	2011	4
+Good Omens	55	1996	5
+The Great Gatsby	14,99	1925	6
+Pride and Prejudice	12,5	1813	7
+1984	9,99	1949	8
+The Catcher in the Rye	11,25	1951	9
+The Hobbit	16,75	1937	10
+
+
+book_author_id	book_id	author_id
+14	4	1
+15	4	2
+16	5	3
+17	5	4
+
+
+
+
+customer_book_id	customer_id	book_id	purchase_date
+1	1	4	2023-10-01
+2	2	5	2023-09-15
+3	3	4	2023-10-05
+4	4	4	2023-09-20
+5	5	4	2023-09-10
+6	6	5	2023-09-10
+15	1	8	2023-10-01
+16	1	6	2023-06-12
+17	2	10	2023-11-22
+18	2	9	2023-03-25
+19	3	7	2023-06-16
+
+
+
+customer_id	customer_name
+1	Alex
+2	Andrei
+3	Ioana
+4	Maria
+5	Andreea
+6	Iulia
+
+
+
+genre_id	genre_name
+1	Classic
+2	Literary Fiction
+3	Science Fiction
+4	Historical
+5	Thriller
+
+
+
+
+-- Books
+INSERT INTO Books (book_name, book_price, year_of_appearance)
+VALUES
+    ('Heads You Lose', 45, 2011),
+    ('Good Omens', 55, 1996),
+    ('The Great Gatsby', 14.99, 1925),
+    ('Pride and Prejudice', 12.50, 1813),
+    ('1984', 9.99, 1949),
+    ('The Catcher in the Rye', 11.25, 1951),
+    ('The Hobbit', 16.75, 1937);
+
+
+-- Authors
+INSERT INTO Authors (author_name, author_id)
+VALUES
+    ('Lisa Lutz', 1),
+    ('David Hayward', 2),
+    ('Neil Gaiman', 3),
+    ('Terry Pratchett', 4);
+
+
+-- BookAuthors
+INSERT INTO BookAuthors (book_id, author_id)
+VALUES
+    (4, 1),
+    (4, 2),
+    (5, 3),
+    (5, 4);
+
+-- Customers
+INSERT INTO Customers (customer_id, customer_name)
+VALUES
+    (1, 'Alex'),
+    (2, 'Andrei'),
+    (3, 'Ioana'),
+    (4, 'Maria'),
+    (5, 'Andreea'),
+    (6, 'Iulia');
+
+
+INSERT INTO Genres (genre_name)
+VALUES
+    ('Classic'),
+    ('Literary Fiction'),
+    ('Science Fiction'),
+    ('Historical'),
+    ('Thriller');
+
+
+
+-- BookGenres
+INSERT INTO BookGenres (book_id, genre_id)
+VALUES
+    (4, 5),
+    (5, 2),
+    (6, 1),
+    (7, 1),
+    (8, 3),
+    (9, 2),
+    (10, 2);
+
+-- BookCustomers
+INSERT INTO BookCustomers (book_id, customer_id)
+VALUES
+    (4, 1),
+    (5, 2),
+    (4, 3),
+    (4, 4),
+    (4, 5),
+    (5, 6),
+    (8, 1),
+    (6, 1),
+    (10, 2),
+    (9, 2),
+    (7, 3);
+
+ 
+
+
+-- CustomerBooks
+INSERT INTO CustomerBooks ( customer_id, book_id, purchase_date)
+VALUES
+    (1, 4, '2023-10-01'),
+    (2, 5, '2023-09-15'),
+    (3, 4, '2023-10-05'),
+    (4, 4, '2023-09-20'),
+    (5, 4, '2023-09-10'),
+    (6, 5, '2023-09-10'),
+    (1, 8, '2023-10-01'),
+    (1, 6, '2023-06-12'),
+    (2, 10, '2023-11-22'),
+    (2, 9, '2023-03-25'),
+    (3, 7, '2023-06-16');
+
+
+
+INSERT INTO BookGenres (book_id, genre_id)
+VALUES
+    (4, 5), -- BookID 4 (Heads You Lose) is associated with GenreID 5
+    (5, 2), 
+    (6, 1),
+    (7, 1),
+    (8, 3),
+    (9, 2),
+    (10, 1);
+
+ 
+
+
+
+STERGERE DIN TABEL CARTE cu un anumit nume
+
+INSERT INTO Books (book_name, book_price, year_of_appearance)
+VALUES
+    ('Carte_de_sters', 99, 2000)
+
+DELETE FROM Books
+WHERE book_name = 'Carte_de_sters';
+
+
+
+
+
+
+STERGERE DIN TABEL CARTI cu pretul > 40
+
+DELETE FROM Books
+WHERE book_price > 40;
+
+
+DELETE FROM Genres;
+
+DROP TABLE Authors;
+
+
+
+
+Ștergerea tuturor cărților publicate după 2015 și cu prețul mai mare de 50 de dolari:
+DELETE FROM Books
+WHERE year_of_appearance > 2015
+  AND book_price > 50.0;
+
+
+
+-- Ștergerea cărților publicate înainte de 2000
+DELETE FROM Books
+WHERE year_of_appearance <= 2000;
+
+
+
+-- Ștergerea clienților cu nume nespecificat sau care nu au făcut nicio achiziție
+DELETE FROM Customers
+WHERE customer_name IS NULL OR customer_id NOT IN (SELECT DISTINCT customer_id FROM CustomerBooks);
+
+
+
+-- Ștergerea din tabela BookCustomers a legăturilor între cărțile cu ID 4 și clienții cu ID 3 și 4
+DELETE FROM BookCustomers
+WHERE book_id = 4 AND customer_id IN (3, 4);
+
+ 
+
+
+----------------------------------------------------------------------------
+
+
+-- Modificarea prețului cărții cu ID 4 la 50
+UPDATE Books
+SET book_price = 50
+WHERE book_id > 4;
+
+
+
+UPDATE Books
+SET book_price = book_price * 2.5
+WHERE book_price < 15.0;
+
+
+
+-- Incrementarea anului apariției pentru cărțile cu preț mai mic de 20
+UPDATE Books
+SET year_of_appearance = year_of_appearance + 1
+WHERE book_price < 20;
+
+
+-- Modificarea numelor clienților care nu au nume specificate
+UPDATE Customers
+SET customer_name = 'Nedenumit'
+WHERE customer_name IS NULL;
+
+
+------->
+ALTER TABLE Customers
+ALTER COLUMN customer_name NVARCHAR(255) NOT NULL;
+
+
+
+-- Alter the BooksAuthors table to make BookID and AuthorID columns not nullable
+ALTER TABLE BooksAuthors
+ALTER COLUMN BookID INT NOT NULL,
+ALTER COLUMN AuthorID INT NOT NULL;
+
+
+-- Alter the BookCustomers table to make BookID and CustomerID columns not nullable
+ALTER TABLE BookCustomers
+ALTER COLUMN BookID INT NOT NULL,
+ALTER COLUMN CustomerID INT NOT NULL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------
+
+M0DIFICARE DE DATE -> ALTER TABLE
+
+
+schimb numele la carte
+schimb numele la variabila book_id iN book_id_schimbat
+
+
+
+-- Alter the BookCustomers table to make BookID and CustomerID columns not nullable
+ALTER TABLE BookCustomers
+ALTER COLUMN book_id INT NOT NULL;
+
+ALTER TABLE BookCustomers
+ALTER COLUMN customer_id INT NOT NULL;
+
+
+
+
+These queries will modify the specified columns in the tables and set them as not nullable, ensuring that the columns 
+must have a value (cannot be NULL) when inserting or updating records.
+
+
+-- Alter the BooksAuthors table to make BookID and AuthorID columns not nullable
+ALTER TABLE BooksAuthors
+ALTER COLUMN BookID INT NOT NULL,
+ALTER COLUMN AuthorID INT NOT NULL;
+
+
+-- Alter the BookCustomers table to make BookID and CustomerID columns not nullable
+ALTER TABLE BookCustomers
+ALTER COLUMN BookID INT NOT NULL,
+ALTER COLUMN CustomerID INT NOT NULL;
+
+
+
+
+FROM Books
+JOIN BookCustomers ON Books.book_id = BookCustomers.book_id
+JOIN Customers ON BookCustomers.customer_id = Customers.customer_id
+WHERE Books.year_of_appearance < 2000
+  AND Customers.customer_name = 'John Doe';
+
+
+
+
+Actualizarea tuturor cărților care au un an de apariție specificat (non-null) și un preț mai mare de 30 de dolari pentru a le marca ca "scumpe" într-o coloană nouă:
+
+
+UPDATE Books
+SET IsExpensive = 1  -- Adăugați o coloană "IsExpensive" care primește valoarea 1 (a fost marcată ca scumpă)
+WHERE YearOfAppearance IS NOT NULL AND BookPrice > 30.0;
+
+Această comandă va actualiza cărțile care au un an de apariție specificat (non-null) și un preț mai mare de 30 de dolari și le va marca ca "scumpe" într-o coloană nouă numită "IsExpensive."
+
+
+
+
+Query DELETE cu IS NULL:
+
+Ștergerea tuturor cărților dintr-un tabel care nu au un an de apariție specificat (coloana "YearOfAppearance" este NULL):
+
+DELETE FROM Books
+WHERE YearOfAppearance IS NULL;
+
+Această comandă va șterge toate cărțile din tabelul "Books" care au un an de apariție nespecificat (adica, NULL).
+
+
+
+Modificarea prețului cărților publicate înainte de 2000 pentru clienți cu numele "John Doe":
+UPDATE Books
+SET BookPrice = BookPrice * 1.1  -- Crește prețul cu 10%
+FROM Books
+JOIN BookCustomers ON Books.BookID = BookCustomers.BookID
+JOIN Customers ON BookCustomers.CustomerID = Customers.CustomerID
+WHERE Books.YearOfAppearance < 2000
+  AND Customers.CustomerName = 'John Doe';
+
+
+
+ 
+
+-- Actualizează prețul cărților publicate înainte de 2000 sau cu un preț mai mare de 50 de dolari
+UPDATE Books
+SET BookPrice = BookPrice * 1.1  -- Crește prețul cu 10%
+WHERE YearOfAppearance < 2000 OR BookPrice > 50.0;
+
+
+
+-- Selectează cărțile publicate înainte de 2000 sau cu un preț mai mare de 50 de dolari
+SELECT *
+FROM Books
+WHERE YearOfAppearance < 2000 OR BookPrice > 50.0;
+
+
+
+
+----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ștergerea tuturor autorilor care nu au publicat cărți:
+DELETE FROM Authors
+WHERE AuthorID NOT IN (SELECT DISTINCT AuthorID FROM BooksAuthors);🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ASTA E INTERESANTA DE INCERCAT
+
+
+
+
+
+ 
+
+
+
+
+ALE MELE
+
+
+ce face constraint         ???????????????????????/ 🔴🔴🔴🔴🔴🔴
+CREATE TABLE Distribution (
+	id_film int NOT NULL,
+	id_actor int NOT NULL,
+	role text,
+	CONSTRAINT PK_Distribution PRIMARY KEY (id_film,id_actor),
+	FOREIGN KEY (id_film) REFERENCES Film(id),
+	FOREIGN KEY (id_actor) REFERENCES Actor(id)
+);
+
+
+
+
+
+Modificarea numelor autorilor care au publicat cărți în 2020 la "Autor Necunoscut":
+
+UPDATE Authors
+SET AuthorName = 'Autor Necunoscut'
+FROM Authors
+JOIN BooksAuthors ON Authors.AuthorID = BooksAuthors.AuthorID
+JOIN Books ON BooksAuthors.BookID = Books.BookID
+WHERE Books.YearOfAppearance = 2020;
+
+
+
+
+
+
+de la text o faci varchar 
+IF OBJECT_ID(N'Film', N'U') IS NULL
+CREATE TABLE Film (
+	id int,
+	name text,
+	release_date DATE,
+	rating decimal(10, 1),
+	country_of_origin text
+)
+
+ALTER TABLE Film
+ALTER COLUMN country_of_origin nvarchar(20);
+
+
+
+---------------------------------------------------------
+ 
+-- Swap book_price and year_of_appearance for the books "Heads You Lose" and "Good Omens"
+UPDATE Books
+SET book_price = 45,
+    year_of_appearance = 2011
+WHERE book_name = 'Heads You Lose';
+
+UPDATE Books
+SET book_price = 55,
+    year_of_appearance = 1996
+WHERE book_name = 'Good Omens';
+
+
+
+
+
+DELETE FROM Genres
+WHERE genre_id BETWEEN 11 AND 15;
+
+
+ALTER TABLE Genres
+ADD rating INT;
+
+
+ALTER TABLE Genres
+RENAME COLUMN rating TO Rating_stars;
+
+---------------------------------------------------------
+
+
+ALTER TABLE BOOKS
+ADD book_id INT PRIMARY KEY IDENTITY(1,1),
+    author_id INT,
+    publisher_id INT,
+    FOREIGN KEY (author_id) REFERENCES AUTHORS(author_id),
+    FOREIGN KEY (publisher_id) REFERENCES PUBLISHERS(publisher_id);
+
+EXEC sp_rename 'STORE.dbo.BookGenres.MappingID', 'book_genre_ID', 'COLUMN';
+
+
+DE VAZUT CARE E BUNA!!!!!!!!!!!!!! RENAME LA FIELD URI / string / id
+ALTER TABLE STORE.dbo.BookGenres
+CHANGE/RENAME COLUMN MappingID book_genre_ID INT;
+
+
+ALTER TABLE AUTHORS
+ADD author_id INT PRIMARY KEY IDENTITY(1,1);
+EXEC sp_rename 'AUTHORS.writer_name', 'author_name', 'COLUMN';
+
+
+
+
+
+INSERT INTO [BooksAuthors] (book_id, author_id) VALUES (4, 1);
+INSERT INTO [BookCustomers] (book_id, customer_id) VALUES (5, 2);
+
+
+DELETE FROM BooksAuthors
+WHERE book_author_id BETWEEN 5 AND 12;
+
+
+CREATE TABLE BooksAuthors (
+    book_author_id INT PRIMARY KEY IDENTITY(1,1),
+    book_id INT,
+    author_id INT,
+    FOREIGN KEY (book_id) REFERENCES BOOKS(book_id),
+    FOREIGN KEY (author_id) REFERENCES AUTHORS(author_id)
+);
+
+
+
+
+
+-- Reset the identity column to start from 1
+DBCC CHECKIDENT ('[BookCustomers]', RESEED, 0); 
+
+---------------------------------------------------------
+
+INTEROGARI INNER OUTER
+
+
+SELECT *
+FROM Books
+WHERE book_price < 20;
+
+
+SELECT Books.*
+FROM Books
+JOIN BookAuthors ON Books.book_id = BookAuthors.book_id
+WHERE BookAuthors.author_id = 1;
+
+
+Această interogare selectează toate cărțile din tabelul "Books" care au fost scrise de un autor cu ID 1. Acest lucru se realizează prin intermediul tabelei de legătură "BookAuthors" care conectează cărțile și autori pe baza identificatorilor.
+
+
+
+----------------------------------------------------------------------------
+
+
+
+
+De pe discord
+
+ALTER TABLE Film
+ALTER COLUMN id int NOT NULL;
+
+ALTER TABLE Film
+ADD CONSTRAINT PK_Film PRIMARY KEY (id);
+
+CREATE TABLE Actor (
+	id int NOT NULL PRIMARY KEY,
+	name text
+);
+
+
+UPDATE Film
+set country_of_origin = 'UK'
+WHERE id % 2 = 0;
+
+
+
+
+-- BookCustomers
+INSERT INTO BookCustomers (book_id, customer_id)
+VALUES
+    (4, 1),
+    (5, 2),
+    (4, 3),
+    (4, 4),
+    (4, 5),
+    (5, 6),
+    (8, 1),
+    (6, 1),
+    (10, 2),
+    (9, 2),
+    (7, 3);
+
+sau asa
+
+INSERT INTO [BookCustomer] (book_id, customer_id) VALUES (5, 1);
+INSERT INTO [BookCustomer] (book_id, customer_id) VALUES (5, 2);
+INSERT INTO [BookCustomer] (book_id, customer_id) VALUES (4, 3);
+INSERT INTO [BookCustomer] (book_id, customer_id) VALUES (4, 4);
+INSERT INTO [BookCustomer] (book_id, customer_id) VALUES (4, 5);
+
+
+
+
+Ștergerea tuturor cărților care nu sunt scrise de un autor specific (de exemplu, autorul cu ID 5):
+
+DELETE FROM Books
+WHERE BookID NOT IN (SELECT BookID FROM BooksAuthors WHERE AuthorID = 5);
+
+
+
+
+
+--UPDATE BooksAuthors
+--SET book_id = 5, author_id = 1 
+--WHERE book_id IS NULL OR author_id IS NULL;        era 18 NULL NULL SI mi a facut 18 5 1 
+-- acum pot sa fac comanda   book_id INT NOT NULL;
+
+--sau asa
+--DELETE FROM BooksAuthors
+--WHERE book_id IS NULL OR author_id IS NULL;
+
+
+--ALTER TABLE BooksAuthors
+--ALTER COLUMN book_id INT NOT NULL;
+
+--ALTER TABLE BooksAuthors
+--ALTER COLUMN author_id INT NOT NULL;
+
+
+--INSERT INTO BooksAuthors (book_id, author_id)
+--VALUES
+--    (NULL, NULL)
+
+

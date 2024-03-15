@@ -1,0 +1,1342 @@
+ 
+
+LAB 4 DE TERMINAT
+TEMA SUPLIMENTARA EX 5,6,7 proceduri seminar 4
+
+
+
+
+ USE STORE
+
+-- introduce date intr-un tabel, pentru cel putin trei tabele,
+-- incluzand un tabel cu o cheie primara compusa;
+
+--fiecare procedura va utiliza functii pentru validarea anumitor parametri; 
+-- se cer cel putin trei functii user-defined (optional se pot utiliza, pe langa aceste trei functii, si functii sistem);
+
+
+CREATE FUNCTION validateBooksName(
+	@book_name nvarchar (50)
+)
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	SET @return_value = 1
+	IF LEN(ISNULL(@book_name, '')) = 0
+        SET @return_value = 0;
+	--IF(LEN (@book_name) < 0)
+	--	SET @return_value = 0
+	--IF @book_name IS NULL
+	--	SET @return_value = 0
+	RETURN @return_value
+END
+ 
+SELECT [dbo].validateBooksName('') AS Result
+SELECT [dbo].validateBooksName('test') AS Result
+
+
+CREATE FUNCTION validateBookPrice(
+	@book_price DECIMAL(10, 2) 
+)
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	SET @return_value = 'true'
+	IF(ISNUMERIC(@book_price) = 0)
+		SET @return_value = 'false'
+	IF @book_price < 0 
+		SET @return_value = 'false'
+	RETURN @return_value
+END
+
+SELECT [dbo].validateBookPrice(-1000) AS Result
+SELECT [dbo].validateBookPrice(123) AS Result
+
+CREATE FUNCTION validateBookYearOfAppearance(
+	 @year_of_appearance INT
+)
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	SET @return_value = 'true'
+	IF(ISNUMERIC(@year_of_appearance) = 0)
+		SET @return_value = 'false'
+	IF @year_of_appearance < 0 
+		SET @return_value = 'false'
+	RETURN @return_value
+END
+
+SELECT [dbo].validateBookYearOfAppearance(-1000) AS Result
+SELECT [dbo].validateBookYearOfAppearance(2002) AS Result
+
+
+CREATE PROCEDURE addBook
+    @book_name NVARCHAR(45),
+    @book_price DECIMAL(10, 2),
+    @year_of_appearance INT
+AS
+BEGIN
+    --IF LEN(@book_name) > 0 AND ISNUMERIC(@book_price) = 1 AND @book_price > 0 AND @year_of_appearance > 0
+	--AND @book_name IS NOT NULL AND @book_price IS NOT NULL AND @year_of_appearance IS NOT NULL 
+	DECLARE @IsValidName BIT
+    DECLARE @IsValidPrice BIT
+    DECLARE @IsValidYear BIT
+
+	DECLARE @contor INT = 0
+
+	SET @IsValidName = dbo.validateBooksName(@book_name)
+    SET @IsValidPrice = dbo.validateBookPrice(@book_price)
+    SET @IsValidYear = dbo.validateBookYearOfAppearance(@year_of_appearance)
+
+	IF @IsValidName = 0
+	BEGIN
+		SET @contor += 1	
+		PRINT 'Eroare: Numele cartii este invalid.'
+	END
+
+	IF @IsValidPrice = 0
+	BEGIN
+		SET @contor += 1
+		PRINT 'Eroare: Pretul cartii este invalid.'
+	END
+
+	IF @IsValidYear = 0
+	BEGIN	
+		SET @contor += 1
+		PRINT 'Eroare: Anul de aparitie al cartii este invalid.'
+	END
+    
+	IF @contor = 0
+		BEGIN
+ 
+			INSERT INTO Books (book_name, book_price, year_of_appearance)
+			VALUES (@book_name, @book_price, @year_of_appearance)
+			PRINT 'Cartea a fost adaugata cu succes.'
+		END
+	ELSE
+		BEGIN
+			PRINT 'Cartea nu a fost adaugata.'
+		END
+
+    --BEGIN
+    --    INSERT INTO Books (book_name, book_price, year_of_appearance)
+    --    VALUES (@book_name, @book_price, @year_of_appearance)
+    --END
+    --ELSE
+    --BEGIN
+    --    PRINT 'Eroare: Parametrii incorecți.'
+    --END
+END
+GO
+
+EXEC addBook 
+    @book_name = '', 
+    @book_price = -10, 
+    @year_of_appearance = -122;
+
+select * from Books
+DELETE FROM BOOKS WHERE book_id IN (24,25,26)
+
+-----------------------------------
+CREATE FUNCTION validateAuthorsName(
+	@author_name nvarchar (50)
+)
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	SET @return_value = 1
+	IF LEN(ISNULL(@author_name, '')) = 0
+        SET @return_value = 0;
+	RETURN @return_value
+END
+ 
+SELECT [dbo].validateAuthorsName('') AS Result
+SELECT [dbo].validateAuthorsName('test') AS Result
+
+
+
+
+CREATE PROCEDURE addAuthor
+    @author_name NVARCHAR(55)
+AS
+BEGIN
+	DECLARE @IsValidName BIT
+	DECLARE @contor INT = 0
+	SET @IsValidName = dbo.validateAuthorsName(@author_name)
+   
+   IF @IsValidName = 0
+	BEGIN
+		SET @contor += 1	
+		PRINT 'Eroare: Numele autorului este invalid.'
+	END
+
+	IF @contor = 0
+		BEGIN
+ 
+			INSERT INTO Authors (author_name)
+			VALUES (@author_name)
+			PRINT 'Autorul a fost adaugat cu succes.'
+		END
+	ELSE
+		BEGIN
+			PRINT 'Autorul nu a fost adaugat.'
+		END
+END
+GO
+
+EXEC addAuthor @author_name = '';
+
+select * from Authors
+
+-----------------------------------
+CREATE FUNCTION validateGenreName(
+	@genre_name nvarchar (50)
+)
+RETURNS BIT AS
+BEGIN
+	DECLARE @return_value bit;
+	SET @return_value = 1
+	IF LEN(ISNULL(@genre_name, '')) = 0
+        SET @return_value = 0;
+	RETURN @return_value
+END
+ 
+SELECT [dbo].validateGenreName('') AS Result
+SELECT [dbo].validateGenreName('test') AS Result
+
+
+
+CREATE PROCEDURE addGenre
+    @genre_name VARCHAR(45)
+AS
+BEGIN
+	DECLARE @IsValidName BIT
+	DECLARE @contor INT = 0
+	SET @IsValidName = dbo.validateGenreName(@genre_name)
+   
+   IF @IsValidName = 0
+	BEGIN
+		SET @contor += 1	
+		PRINT 'Eroare: Numele genului este invalid.'
+	END
+     
+	IF @contor = 0
+		BEGIN
+ 
+			INSERT INTO Genres(genre_name)
+			VALUES (@genre_name)
+			PRINT 'Genul a fost adaugat cu succes.'
+		END
+	ELSE
+		BEGIN
+			PRINT 'Genul nu a fost adaugat.'
+		END
+END
+GO
+
+EXEC addGenre @genre_name = 'test3';
+
+select * from Genres
+
+
+--creare tabel cu cheie primara compusa
+ 
+CREATE TABLE CustomBookDesignPackage
+(
+    book_id INT NOT NULL,
+    customer_id INT NOT NULL
+    CONSTRAINT fk_book_id FOREIGN KEY(book_id) REFERENCES Books(book_id),
+    CONSTRAINT fk_customer_id FOREIGN KEY(customer_id) REFERENCES Customers(customer_id),
+    CONSTRAINT pk_custom_book_design_package PRIMARY KEY(book_id, customer_id)
+)
+
+
+CREATE FUNCTION dbo.findBookId(@book_id INT)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @Exists BIT;
+
+    IF EXISTS (SELECT 1 FROM Books WHERE book_id = @book_id)
+        SET @Exists = 1;
+    ELSE
+        SET @Exists = 0;
+
+    RETURN @Exists;
+END;
+ 
+
+SELECT dbo.findBookId(8) AS Result
+SELECT dbo.findBookId(12345) AS Result
+
+CREATE FUNCTION dbo.findCustomerId(@customer_id INT)
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @Exists BIT;
+
+    IF EXISTS (SELECT 1 FROM Customers WHERE customer_id = @customer_id)
+        SET @Exists = 1;
+    ELSE
+        SET @Exists = 0;
+
+    RETURN @Exists;
+END;
+
+
+
+ALTER PROCEDURE addCustomBookDesignPackage
+    @book_id INT,
+    @customer_id INT
+AS
+BEGIN
+	DECLARE @BookExists BIT;
+    DECLARE @CustomerExists BIT;
+
+    SET @BookExists = dbo.findBookId(@book_id);
+    SET @CustomerExists = dbo.findCustomerId(@customer_id);
+
+    IF @BookExists = 1 AND @CustomerExists = 1
+    BEGIN
+        INSERT INTO CustomBookDesignPackage (book_id, customer_id)
+        VALUES (@book_id, @customer_id);
+        PRINT 'Adaugare cu succes.';
+    END
+
+	ELSE
+    BEGIN
+        PRINT 'Id-ul cartii sau al clientului este inexistent. Adaugare esuata.';
+    END
+
+ --   IF @book_id IS NOT NULL AND @customer_id IS NOT NULL
+	--AND EXISTS (SELECT 1 FROM Books WHERE book_id = @book_id) 
+ --   AND EXISTS (SELECT 1 FROM Customers WHERE customer_id = @customer_id)
+  
+END
+GO
+
+
+EXEC addCustomBookDesignPackage @book_id = 6, @customer_id = 4;
+
+select * from CustomBookDesignPackage
+select * from Books
+select * from Customers
+
+
+
+
+
+
+--CREATE OR ALTER VIEW [Actor in Movies] AS
+--SELECT Actor.Name AS Actor_Name, Movie.Name AS Movie_Name, Movie.Release_Date
+--FROM Actor
+--INNER JOIN Distribution ON Actor.ID = Distribution.ID_Actor
+--INNER JOIN Movie ON Distribution.ID_Movie = Movie.ID
+
+
+
+-- 2 creati un view care combina date care provin din doua sau trei tabele;
+-- View combining data from Books and Authors tables
+ 
+CREATE VIEW BooksAuthorsInfo AS
+SELECT b.book_id, b.book_name, b.book_price, b.year_of_appearance, a.author_name
+FROM Books b
+INNER JOIN BooksAuthors ba ON b.book_id = ba.book_id
+INNER JOIN Authors a ON ba.author_id = a.author_id;
+
+SELECT * FROM BooksAuthorsInfo;
+
+
+-- View combining data from Customers, Books, and CustomerBooks tables
+CREATE VIEW CustomerBookInfo AS
+SELECT cb.customer_book_id, c.customer_name, b.book_price, b.year_of_appearance, cb.purchase_date
+FROM Customers c
+INNER JOIN CustomerBooks cb ON c.customer_id = cb.customer_id
+INNER JOIN Books b ON cb.book_id = b.book_id;
+
+SELECT * FROM CustomerBookInfo;
+
+
+
+
+
+-- Trigger pentru operația de adăugare în tabelul Books
+CREATE TRIGGER triggerBookAfterInsert
+ON Books
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @OperationType NVARCHAR(10) = 'Insert'
+    DECLARE @TableName NVARCHAR(50) = 'Books'
+
+    DECLARE @InsertedBookId INT;
+    SELECT @InsertedBookId = book_id FROM inserted;
+
+    IF dbo.findBookId(@InsertedBookId) = 1
+    BEGIN
+        PRINT 'Operatie: ' + @OperationType + ' pe tabelul ' + @TableName + ' la data ' + CONVERT(NVARCHAR, GETDATE(), 20);
+    END
+	ELSE
+	BEGIN
+        PRINT 'Cartea nu exista';
+    END
+    --ELSE
+    --BEGIN
+        --RAISEERROR ('Inserted book_id does not exist in the Books table.', 16, 1);
+    --END
+END
+
+CREATE TRIGGER triggerBookInsteadOfInsert
+ON Books
+INSTEAD OF INSERT
+AS
+BEGIN
+    DECLARE @OperationType NVARCHAR(10) = 'Insert'
+    DECLARE @TableName NVARCHAR(50) = 'Books'
+
+    DECLARE @InsertedBookId INT;
+    SELECT @InsertedBookId = book_id FROM inserted;
+
+    IF dbo.findBookId(@InsertedBookId) = 1
+    BEGIN
+        PRINT 'Operatie: ' + @OperationType + ' pe tabelul ' + @TableName + ' la data ' + CONVERT(NVARCHAR, GETDATE(), 20);
+    END
+	ELSE
+	BEGIN
+        PRINT 'Cartea nu exista';
+    END
+    --ELSE
+    --BEGIN
+        --RAISEERROR ('Inserted book_id does not exist in the Books table.', 16, 1);
+    --END
+END
+
+ INSERT INTO Books VALUES ('wwwwwwwww', 1,2000)
+SELECT * FROM Books;
+DELETE FROM Books WHERE book_id = 25;
+DELETE FROM Books WHERE book_id = 123;
+
+
+
+ -- de pus
+--    DECLARE @IsValidInsert BIT = 1;  
+--    IF EXISTS (SELECT 1 FROM inserted WHERE LEN(book_name) = 0)
+--    BEGIN
+--        SET @IsValidInsert = 0; -- Invalid insertion due to empty book_name
+--        RAISEERROR ('Book name cannot be empty.', 16, 1);
+--    END
+
+--    IF @IsValidInsert = 1
+--    BEGIN
+--        INSERT INTO Books (book_name, book_price, year_of_appearance)
+--        SELECT book_name, book_price, year_of_appearance
+--        FROM inserted;
+        
+--        PRINT 'Insertion into Books table successful.';
+--    END
+--END;
+
+
+ 
+-- Trigger pentru operatia de stergere din tabelul Books
+CREATE TRIGGER triggerBooksDelete
+ON Books
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @OperationType NVARCHAR(10) = 'Delete'
+    DECLARE @TableName NVARCHAR(50) = 'Books'
+	--IF findBookId()
+    -- Afisare mesaj cu data si ora, tipul operatiei si numele tabelului
+    PRINT 'Operatie: ' + @OperationType + ' pe tabelul ' + @TableName + ' la data ' + CONVERT(NVARCHAR, GETDATE(), 20)
+END;
+
+ 
+INSERT INTO Books VALUES ('wwwwwwwww', 1,2000)
+SELECT * FROM Books;
+DELETE FROM Books WHERE book_id = 21;
+DELETE FROM Books WHERE book_id = 123;
+
+
+
+
+-- trigger insert book + validari
+-- trigger delete author + validari
+-- trigger insert author + validari
+
+
+-- 2 triggere suplimentare optionale
+
+
+--view in care vad toate deodata
+  
+
+
+
+
+
+VIEW 
+TRIGGER
+PROCEDURI
+FUNCTII
+ 
+
+-------------------------------------
+
+Lab4 – atribuit in saptamana 7/8 cu predare in saptamana 11/12
+
+scrieti cate o procedura stocata care introduce date intr-un tabel, pentru cel putin trei tabele,
+incluzand un tabel cu o cheie primara compusa;
+
+parametrii unei astfel de proceduri sunt atributele care descriu entitatile / relatiile din tabel,
+mai putin coloanele cheilor primare (exceptie facand o procedura stocata care adauga date intr-o 
+tabela de legatura, pentru care se poate indica cheia primara);
+
+fiecare procedura va utiliza functii pentru validarea anumitor parametri; 
+se cer cel putin trei functii user-defined (optional se pot utiliza, pe langa aceste trei functii, si functii sistem);
+
+
+creati un view care combina date care provin din doua sau trei tabele;
+
+implementati, pentru un tabel la alegere, un trigger pentru operatia de adaugare si unul pentru
+cea de stergere; la executia fiecarui trigger se va afisa pe ecran un mesaj cu data si ora la care
+s-a realizat operatia, tipul operatiei (Insert/Delete) si numele tabelului; optional, puteti crea
+triggere similare si pentru alte tabele.
+
+PT PUNCT IN PLUS LA EXAMEN, creati 2 triggere optionale la punctul 3
+
+
+
+
+
+
+LAB 4
+FARA ID DOAR 
+
+
+CREATE PROCEDURE addBook
+    @book_name NVARCHAR(45),
+    @book_price DECIMAL(10, 2),
+    @year_of_appearance INT,
+	@book_id INT
+AS
+BEGIN
+    -- Validarea parametrilor
+    IF LEN(@book_name) > 0 AND ISNUMERIC(@book_price) = 1 AND @book_price > 0 AND @year_of_appearance > 0
+	AND @book_name IS NOT NULL AND @book_price IS NOT NULL AND @year_of_appearance IS NOT NULL AND @book_id IS NOT NULL
+	AND NOT EXISTS (SELECT 1 FROM Books WHERE book_id = @book_id)
+    BEGIN
+        INSERT INTO Books (book_name, book_price, year_of_appearance, book_id)
+        VALUES (@book_name, @book_price, @year_of_appearance,@book_id)
+    END
+    ELSE
+    BEGIN
+        PRINT 'Eroare: Parametrii incorecți.'
+    END
+END
+GO
+
+EXEC addBook 
+    @book_name = 'Sample Book', 
+    @book_price = 29.99, 
+    @year_of_appearance = 2023,
+    @book_id = 12345;
+
+
+EXEC addBook 
+    @book_name = 'Sample Book', 
+    @book_price = 29.99, 
+    @year_of_appearance = 2023;
+
+select * from Books
+
+------------------------------------------------
+
+CREATE PROCEDURE addAuthor
+    @author_name NVARCHAR(55)
+AS
+BEGIN
+    IF LEN(@author_name) > 0
+    BEGIN
+        INSERT INTO Authors (author_name)
+        VALUES (@author_name)
+    END
+    ELSE
+    BEGIN
+        PRINT 'Eroare: Parametrul incorect.'
+    END
+END
+GO
+
+EXEC addAuthor @author_name = 'Autor test';
+
+select * from Authors
+
+
+ 
+-----------------------------------
+
+CREATE PROCEDURE addGenre
+    @genre_name VARCHAR(255)
+AS
+BEGIN
+	-- Validare !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+    IF LEN(@genre_name) > 0
+    BEGIN
+        INSERT INTO Genres (genre_name)
+        VALUES (@genre_name)
+    END
+    ELSE
+    BEGIN
+        PRINT 'Eroare: Parametrul incorect.'
+    END
+END
+GO
+
+EXEC addGenre @genre_name = 'Gen test';
+
+select * from Genres
+
+
+-----------------------------------
+
+ 
+ --creare tabel cu cheie primara compusa
+ 
+CREATE TABLE CustomBookDesignPackage
+(
+    book_id INT NOT NULL,
+    customer_id INT NOT NULL
+    CONSTRAINT fk_book_id FOREIGN KEY(book_id) REFERENCES Books(book_id),
+    CONSTRAINT fk_customer_id FOREIGN KEY(customer_id) REFERENCES Customers(customer_id),
+    CONSTRAINT pk_custom_book_design_package PRIMARY KEY(book_id, customer_id)
+)
+
+CREATE PROCEDURE addCustomBookDesignPackage
+    @book_id INT,
+    @customer_id INT
+AS
+BEGIN
+    IF @book_id IS NOT NULL AND @customer_id IS NOT NULL
+	AND EXISTS (SELECT 1 FROM Books WHERE book_id = @book_id) 
+       AND EXISTS (SELECT 1 FROM Customers WHERE customer_id = @customer_id)
+    BEGIN
+        INSERT INTO CustomBookDesignPackage (book_id, customer_id)
+        VALUES (@book_id, @customer_id)
+    END
+    ELSE
+    BEGIN
+        PRINT 'Eroare: Parametrii incorecti.'
+
+
+    END
+END
+GO
+
+EXEC addCustomBookDesignPackage @book_id = 5, @customer_id = 3;
+
+-----------------------------------
+
+
+CREATE VIEW BookAuthorView
+AS
+SELECT B.BookID, B.BookTitle, B.BookPrice, B.YearOfAppearance, A.AuthorID, A.AuthorName
+FROM Books B
+INNER JOIN BooksAuthors BA ON B.BookID = BA.BookID
+INNER JOIN Authors A ON BA.AuthorID = A.AuthorID;
+
+
+SELECT * FROM BookAuthorView;
+
+
+
+
+
+
+CREATE TRIGGER trg_Books_Insert
+ON Books
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'INSERT';
+    DECLARE @tableName NVARCHAR(50) = 'Books';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data si ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operatie: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+CREATE TRIGGER trg_Books_Delete
+ON Books
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'DELETE';
+    DECLARE @tableName NVARCHAR(50) = 'Books';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data si ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operatie: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+Aceste triggere (trg_Books_Insert și trg_Books_Delete) vor afișa un mesaj pe ecran în momentul în care se realizează o operație de inserare sau ștergere în tabela Books. Mesajul va conține data și ora la care a avut loc operația, tipul operației (INSERT sau DELETE) și numele tabelului afectat (Books în acest caz).
+
+
+
+
+plus
+CREATE TRIGGER trg_Authors_Insert
+ON Authors
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'INSERT';
+    DECLARE @tableName NVARCHAR(50) = 'Authors';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+CREATE TRIGGER trg_Authors_Delete
+ON Authors
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'DELETE';
+    DECLARE @tableName NVARCHAR(50) = 'Authors';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+
+
+CREATE TRIGGER trg_Customers_Insert
+ON Customers
+AFTER INSERT
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'INSERT';
+    DECLARE @tableName NVARCHAR(50) = 'Customers';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+
+
+CREATE TRIGGER trg_Customers_Delete
+ON Customers
+AFTER DELETE
+AS
+BEGIN
+    DECLARE @operationType NVARCHAR(10) = 'DELETE';
+    DECLARE @tableName NVARCHAR(50) = 'Customers';
+    DECLARE @currentDateTime DATETIME = GETDATE();
+
+    PRINT 'Data și ora: ' + CONVERT(VARCHAR, @currentDateTime, 20) + ', Tip operație: ' + @operationType + ', Nume tabel: ' + @tableName;
+END;
+
+
+-------------------------------------
+
+TEORIE LAB 4
+CREATE TABLE Movie
+(
+    ID_MOVIE INT NOT NULL PRIMARY KEY,
+    NAME VARCHAR(50) NOT NULL,
+    RELEASE_DATE DATE NOT NULL
+)
+
+CREATE TABLE Actor
+(
+    ID_ACTOR INT NOT NULL  PRIMARY KEY,
+    NAME VARCHAR(50) NOT NULL,
+    DATE_OF_BIRTH DATE NOT NULL 
+)
+
+CREATE TABLE Distributions
+(
+    ID_MOVIE INT NOT NULL,
+    ID_ACTOR INT NOT NULL
+    CONSTRAINT fk_category_movie FOREIGN KEY(ID_MOVIE) REFERENCES Movie(ID_MOVIE),
+    CONSTRAINT fk_category_actor FOREIGN KEY(ID_ACTOR) REFERENCES Actor(ID_ACTOR),
+    CONSTRAINT pk_category PRIMARY KEY(ID_MOVIE, ID_ACTOR)
+)
+
+CREATE OR ALTER PROCEDURE AddMovie @ID int, @Name text, @Release_Date nvarchar(20)
+AS
+BEGIN
+    IF ISDATE(@Release_Date) = 1
+    BEGIN
+        INSERT INTO Movie VALUES (@ID, @Name, @Release_Date)
+        PRINT 'INSERTED MOVIE'
+    END
+    ELSE
+        PRINT 'INVALID DATE'
+END
+EXEC AddMovie @ID = 40, @Name = 'D', @Release_Date = '2023-12-14';
+CREATE OR ALTER FUNCTION TestValues (
+    @ID nvarchar(20),
+    @Name nvarchar(50),
+    @Release_Date nvarchar(20)
+)
+RETURNS bit AS
+BEGIN
+    DECLARE @return_value bit;
+    set @return_value = 'true'
+    IF ISNUMERIC(@ID) = 0
+        set @return_value = 'false'
+    IF ISDATE(@Release_Date) = 0
+        set @return_value = 'false'
+    RETURN @return_value
+END;
+
+SELECT dbo.TestValues(4, 'D', '2023-11-14');
+
+
+
+
+CREATE OR ALTER VIEW [Actor in Movies] AS
+SELECT Actor.Name AS Actor_Name, Movie.Name AS Movie_Name, Movie.Release_Date
+FROM Actor
+INNER JOIN Distribution ON Actor.ID = Distribution.ID_Actor
+INNER JOIN Movie ON Distribution.ID_Movie = Movie.ID
+
+
+
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK;
+INSERT INTO Actor VALUES (3, 'TEST', '2023-11-11')
+DELETE Actor WHERE ID = 3;
+CREATE OR ALTER TRIGGER Trigger_Insert_Actor
+ON ACTOR
+INSTEAD OF INSERT
+AS
+BEGIN
+    DECLARE @ID int, @Name nvarchar(50), @DateOfBirth nvarchar(50)
+    SELECT @ID = ID, @Name = Name, @DateOfBirth = Date_of_Birth from inserted
+    INSERT INTO Actor VALUES (@ID + 10, @Name, @DateOfBirth)
+END
+
+INSERT INTO Actor VALUES (4, 'TEST2', '2023-11-11')
+
+DELETE ACTOR
+WHERE Name = 'TEST2';
+DROP TRIGGER Message_for_Actor
+
+
+
+
+
+EUUUU
+
+
+CREATE DATABASE Lab3
+use Lab3
+
+CREATE TABLE Movie(
+	id_movie INT PRIMARY KEY,
+	nume nvarchar(255),
+	release_date DATE
+)
+
+CREATE TABLE Actor(
+	id_actor INT PRIMARY KEY,
+	nume nvarchar(255),
+	date_of_birth DATE
+)
+
+
+CREATE TABLE Distributions(
+	id_actor INT  NOT NULL,
+	id_movie INT  NOT NULL, 
+	CONSTRAINT pk_distributions PRIMARY KEY(id_actor, id_movie),
+	FOREIGN KEY (id_actor) REFERENCES Actor(id_actor),
+	FOREIGN KEY (id_movie) REFERENCES Movie(id_movie)
+)
+
+GO
+CREATE OR ALTER PROCEDURE AddMovie @id_movie int, @nume text, @release_date nvarchar(255)
+AS  --pornim procedura     begin=as
+IF ISDATE(@release_date)=1   --true = 1 in sql, 0=false
+BEGIN
+	INSERT INTO Movie VALUES(@id_movie,@nume, @release_date)
+	PRINT 'INSERTED MOVIE'
+END --inchidem acolada d
+ELSE
+	PRINT 'INVALID DATE'
+
+EXEC AddMovie @id_movie = 10, @nume='Movie1', @release_date ='2023-11-14';
+
+
+SELECT * FROM Movie;
+
+
+
+-- functie ce verifica daca un movie are id numeric si date de tip date
+CREATE OR ALTER FUNCTION TestValues (
+	@id_movie nvarchar (20),
+	@nume nvarchar (50),
+	@release_date nvarchar(20)
+)
+RETURNS bit AS
+BEGIN
+	DECLARE @return_value bit;
+	set @return_value = 'true'
+	IF ISNUMERIC(@id_movie) = 0
+		set @return_value = 'false'
+	IF ISDATE(@release_date) = 0
+		set @return_value = 'false'
+	RETURN @return_value
+END
+
+SELECT dbo.TestValues(4,'D', '2023-11-14') -- VA DA 1
+SELECT dbo.TestValues('A','D', '2023-11-14') -- VA DA 0
+--sa fac un for pentru selectarea tuturor filmelor
+
+--BEGIN 
+--END
+=
+--{
+--}
+
+--https://www.w3schools.com/sql/sql_ref_sqlserver.asp
+--https://www.w3schools.com/sql/sql_stored_procedures.asp
+
+CREATE OR ALTER VIEW [Actor in Movies] AS
+SELECT Actor.nume AS Actor_name, Movie.nume as Movie_name, Movie.release_date
+FROM Actor 
+INNER JOIN Distributions ON Actor.id_actor = Distributions.id_actor
+INNER JOIN Movie ON Distributions.id_movie = Movie.id_movie
+
+
+
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK
+
+
+INSERT INTO Actor VALUES(3, 'TEST', '2023-11-11')
+DELETE Actor WHERE id_actor=3 ;
+DELETE FROM Actor WHERE id_actor=3 ;
+
+
+ALTER TABLE Actor
+ALTER COLUMN nume nvarchar(50)
+
+
+CREATE OR ALTER TRIGGER Message_for_Actor
+ON Actor
+FOR DELETE
+AS
+PRINT 'YOU CANNOT DELETE ACTORS!'
+ROLLBACK
+
+
+--video trigger actor
+
+--la insert punem elemente de validare in trigger
+
+
+
+
+-------------------------------------
+SEMINAR 4
+
+
+USE SEM3
+SELECT * FROM Publicatie
+
+--scrieti o procedura stocata care afiseaza 
+
+--(a) toate publicatiile din baza de date 
+GO
+CREATE OR ALTER PROCEDURE getAllPublicatii
+AS
+BEGIN
+	SELECT * FROM Publicatie
+END
+--GO
+
+EXEC getAllPublicatii
+
+
+
+--(b) o alta procedura stocata care afiseaza autorul cu cele mai multe publicatii.
+
+CREATE PROCEDURE getAuthorWithMostPublications
+AS
+BEGIN
+	SELECT TOP 1 autorp, COUNT(*) AS numar_publicatii FROM Publicatie
+	GROUP BY autorp -- de ce TREBUIE NEAPARAT GROUP BY?
+	ORDER BY numar_publicatii DESC
+END
+GO
+
+EXEC getAuthorWithMostPublications
+
+
+
+-- 2 scrieti o procedura stocata care insereaza 
+--o publicatie in tabela Publicatie
+
+CREATE PROCEDURE inserarePublicatie
+	@id_publicatie INT,
+	@titlu NVARCHAR(30),
+	@abstract NVARCHAR(30),
+	@autorp NVARCHAR(30),
+	@id_cat INT
+AS
+BEGIN
+	INSERT INTO Publicatie (id_publ,titlu,abstract,autorp,id_cat)
+	VALUES (@id_publicatie, @titlu, @abstract, @autorp, @id_cat)
+	PRINT 'Inserare reusita'
+END
+GO
+
+EXEC inserarePublicatie 101, 'Titluuu', 'Abstractttt','Autorpp', '1'
+
+SELECT * FROM Publicatie
+
+DELETE FROM Publicatie where id_publ = 101
+
+
+
+--3 scrieti o procedura stocata care actualizeaza site-ul web
+--al unei biblioteci electronice date ca parametru si 
+--care afiseaza un mesaj de succes dupa actualizare.
+
+CREATE PROCEDURE actualizareSiteWeb
+	@id_biblioteca INT,
+	@site_web_nou NVARCHAR(35)
+AS
+BEGIN
+	UPDATE Biblioteca
+	SET site = @site_web_nou
+	WHERE id_biblio = @id_biblioteca;
+	PRINT 'Site-ul web al bibliotecii a fost actualizat cu succes.';
+END
+GO
+
+EXEC actualizareSiteWeb @id_biblioteca=5, @site_web_nou = 'www.new.com'
+EXEC actualizareSiteWeb 5, 'www.aaaaaaa.com'
+
+
+SELECT * FROM Biblioteca
+
+
+
+
+--4 procedura stocata care calculeaza numarul
+--publicatiilor de categoria jurnal a unui autor principal primit ca
+--si parametru.
+
+CREATE PROCEDURE getNrOfPublicationsOfCertainAuthor
+	(@autorp NVARCHAR(35))
+AS
+BEGIN
+	SELECT COUNT(*) AS numar_publicatii from Publicatie
+	INNER JOIN Categorie on Publicatie.id_cat = Categorie.id_cat
+	WHERE Categorie.nume = 'Fiction' AND Publicatie.autorp = @autorp
+END
+GO
+
+EXEC getNrOfPublicationsOfCertainAuthor @autorp = 'ROMAN RAUL ION'
+
+
+UPDATE Categorie
+SET nume = 'jurnal'
+WHERE id_cat = 1
+
+
+
+SELECT * FROM Publicatie
+SELECT * FROM Categorie
+
+
+--5 Scrieti o procedura stocata care primeste numele unui autor principal si care modifica categoria tuturor
+-- publicatiilor acestui autor in ‘jurnal’ (pentru cele care nu
+--sunt deja de categoria jurnal). In cazul in care autorul nu
+--are alte publicatii inafara de categoria jurnal inainte de
+--actualizare, afisati un mesaj care precizeaza acest lucru.
+
+CREATE PROCEDURE updateAuthorPublicationsCategoryToJournal
+	@autorp NVARCHAR(35)
+AS
+BEGIN
+	DECLARE @NumarPublicatii INT
+	SELECT @NumarPublicatii = COUNT(*) FROM Publicatie
+	WHERE autorp = @autorp AND id_cat NOT IN (SELECT id_cat FROM Categorie WHERE nume = 'jurnal')
+
+	IF @NumarPublicatii = 0
+		PRINT 'Autorul nu are alte publicații în afara de categoria jurnal.'
+	ELSE
+		UPDATE Publicatie
+		SET id_cat = (SELECT id_cat FROM Categorie WHERE nume = 'jurnal')
+		WHERE autorp = @autorp AND id_cat NOT IN (SELECT id_cat FROM Categorie WHERE nume = 'jurnal')
+
+	PRINT 'Actualizare efectuată cu succes.'
+END
+GO
+
+EXEC updateAuthorPublicationsCategoryToJournal @autorp = '..........'
+
+SELECT * FROM Publicatie
+
+
+
+
+--6 Scrieti o procedura stocata care primeste numele
+--unui autor principal, id-ul unei publicatii, titlul acesteia si
+--categoria din care publicatia face parte si adauga noua
+--publicatie autorului precizat. In cazul in care publicatia
+--exista deja, sa se actualizeze categoria din care aceasta
+--face parte.
+CREATE PROCEDURE adaugaSauActualizeazaPublicatie
+    @autorp NVARCHAR(30),
+    @id_publicatie INT,
+    @titlu NVARCHAR(30),
+    @categorie NVARCHAR(30)
+AS
+BEGIN
+    -- Verificăm dacă publicația există deja pentru acel autor
+    IF EXISTS (SELECT 1 FROM Publicatie WHERE autorp = @autorp AND id_publ = @id_publicatie)
+    BEGIN
+        -- Actualizăm categoria publicației existente
+        UPDATE Publicatie
+        SET id_cat = (SELECT id_cat FROM Categorie WHERE nume = @categorie)
+        WHERE autorp = @autorp AND id_publ = @id_publicatie
+        PRINT 'Publicația există deja. Categoria a fost actualizată.'
+    END
+    ELSE
+    BEGIN
+        -- Adăugăm o nouă publicație pentru autorul specificat
+        INSERT INTO Publicatie (id_publ, titlu, autorp, id_cat)
+        VALUES (@id_publicatie, @titlu, @autorp, (SELECT id_cat FROM Categorie WHERE nume = @categorie))
+        PRINT 'Publicația a fost adăugată pentru autorul specificat.'
+    END
+END
+
+EXEC adaugaSauActualizeazaPublicatie @autorp = 'NumeAutor', @id_publicatie = 101, @titlu = 'Titlu Publicatie Noua', @categorie = 'CategoriaPublicatiei'
+
+
+
+--7 Scrieti o procedura stocata care primeste numele a
+--doi autori principali si care afiseaza care dintre acestia are
+--mai multe publicatii de categoria jurnal. Procedura
+--apeleaza procedura stocata de la ex. 4. Se verifica mai intai
+--ca cei doi autori principali sunt diferiti, iar in caz contrar
+--se afiseaza un mesaj de eroare.
+
+
+CREATE PROCEDURE compararePublicatiiJurnal
+    @autor1 NVARCHAR(30),
+    @autor2 NVARCHAR(30)
+AS
+BEGIN
+    DECLARE @numarPublicatiiAutor1 INT, @numarPublicatiiAutor2 INT
+
+    -- Verificăm dacă cei doi autori sunt diferiți
+    IF @autor1 = @autor2
+    BEGIN
+        PRINT 'Eroare: Cei doi autori trebuie să fie diferiți.'
+    END
+    ELSE
+    BEGIN
+        -- Obținem numărul de publicații de categorie 'jurnal' pentru primul autor
+        EXEC getNrOfPublicationsOfCertainAuthor @autorp = @autor1
+        SET @numarPublicatiiAutor1 = @@ROWCOUNT
+
+        -- Obținem numărul de publicații de categorie 'jurnal' pentru al doilea autor
+        EXEC getNrOfPublicationsOfCertainAuthor @autorp = @autor2
+        SET @numarPublicatiiAutor2 = @@ROWCOUNT
+
+        -- Comparăm numărul de publicații și afișăm rezultatul
+        IF @numarPublicatiiAutor1 > @numarPublicatiiAutor2
+        BEGIN
+            PRINT 'Autorul ' + @autor1 + ' are mai multe publicații de categoria jurnal.'
+        END
+        ELSE IF @numarPublicatiiAutor2 > @numarPublicatiiAutor1
+        BEGIN
+            PRINT 'Autorul ' + @autor2 + ' are mai multe publicații de categoria jurnal.'
+        END
+        ELSE
+        BEGIN
+            PRINT 'Cei doi autori au același număr de publicații de categoria jurnal.'
+        END
+    END
+END
+
+CREATE PROCEDURE compararePublicatiiAutori
+    @autor1 NVARCHAR(30),
+    @autor2 NVARCHAR(30)
+AS
+BEGIN
+    DECLARE @numarPublicatiiAutor1 INT, @numarPublicatiiAutor2 INT
+
+    -- Verificăm dacă cei doi autori sunt diferiți
+    IF @autor1 = @autor2
+    BEGIN
+        PRINT 'Eroare: Cei doi autori trebuie să fie diferiți.'
+    END
+    ELSE
+    BEGIN
+        -- Obținem numărul total de publicații pentru primul autor
+        SELECT @numarPublicatiiAutor1 = COUNT(*)
+        FROM Publicatie
+        WHERE autorp = @autor1
+
+        -- Obținem numărul total de publicații pentru al doilea autor
+        SELECT @numarPublicatiiAutor2 = COUNT(*)
+        FROM Publicatie
+        WHERE autorp = @autor2
+
+        -- Comparăm numărul de publicații și afișăm rezultatul
+        IF @numarPublicatiiAutor1 > @numarPublicatiiAutor2
+        BEGIN
+            PRINT 'Autorul ' + @autor1 + ' are mai multe publicații.'
+        END
+        ELSE IF @numarPublicatiiAutor2 > @numarPublicatiiAutor1
+        BEGIN
+            PRINT 'Autorul ' + @autor2 + ' are mai multe publicații.'
+        END
+        ELSE
+        BEGIN
+            PRINT 'Cei doi autori au același număr de publicații.'
+        END
+    END
+END
+
+
+CREATE PROCEDURE compararePublicatiiJurnal2
+    @autor1 NVARCHAR(30),
+    @autor2 NVARCHAR(30)
+AS
+BEGIN
+    DECLARE @numarPublicatiiAutor1 INT, @numarPublicatiiAutor2 INT
+
+    -- Verificăm dacă cei doi autori sunt diferiți
+    IF @autor1 = @autor2
+    BEGIN
+        PRINT 'Eroare: Cei doi autori trebuie să fie diferiți.'
+    END
+    ELSE
+    BEGIN
+        -- Simulăm numărul de publicații de categorie 'jurnal' pentru primul autor
+        SELECT @numarPublicatiiAutor1 = COUNT(*)
+        FROM Publicatie p
+        INNER JOIN Categorie c ON p.id_cat = c.id_cat
+        WHERE p.autorp = @autor1 AND c.nume = 'Fiction'
+
+        -- Simulăm numărul de publicații de categorie 'jurnal' pentru al doilea autor
+        SELECT @numarPublicatiiAutor2 = COUNT(*)
+        FROM Publicatie p
+        INNER JOIN Categorie c ON p.id_cat = c.id_cat
+        WHERE p.autorp = @autor2 AND c.nume = 'Fiction'
+
+        -- Comparăm numărul de publicații și afișăm rezultatul
+        IF @numarPublicatiiAutor1 > @numarPublicatiiAutor2
+        BEGIN
+            PRINT 'Autorul ' + @autor1 + ' are mai multe publicatii de categoria jurnal.'
+        END
+        ELSE IF @numarPublicatiiAutor2 > @numarPublicatiiAutor1
+        BEGIN
+            PRINT 'Autorul ' + @autor2 + ' are mai multe publicatii de categoria jurnal.'
+        END
+        ELSE
+        BEGIN
+            PRINT 'Cei doi autori au acelasi număr de publicatii de categoria jurnal.'
+        END
+    END
+END
+
+
+
+
+EXEC compararePublicatiiJurnal2 @autor1 = 'ROMAN RAUL ION', @autor2 = 'TICLEA VERONICA'
+
+
+SELECT * FROM Publicatie
+SELECT * FROM Categorie
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--Crearea unei proceduri stocate care primeste autorul principal
+--returneaza toate publicatiile acelui autor principal:
+CREATE PROCEDURE getPublicatii
+	@Autor varchar(50)
+ AS
+ BEGIN
+	SELECT titlu, autorp FROM Publicatie
+	WHERE autorp = @Autor
+ END
+ GO
+
+ EXEC getPublicatii()
+
+-Dorim să modificăm procedura stocată astfel încât să
+-returneze numărul de publicatii ale unui autor principal
+
+ALTER PROCEDURE getPublicatii
+	(@Autor varchar(50), @Number int OUTPUT)
+AS
+BEGIN
+ SELECT @Number=COUNT(*) FROM Publicatie
+ WHERE autorp = @Autor
+END
+GO
+
+DECLARE @Number int
+ SET @Number =0
+ EXEC getPublicatii 'Michael Brodie',
+ @Number = @Number OUTPUT
+ PRINT @Number
+
+
+
+ --O altă variantă a procedurii stocate care conține RAISERROR
+ ALTER PROCEDURE getPublicatii (@Autor varchar(50),
+ @Number int OUTPUT)
+ AS
+ BEGIN
+ SELECT @Number=COUNT(*) FROM Publicatie
+ WHERE autorp = @Autor
+ IF @Number = 0
+	RAISERROR ('Autorul precizat nu are publicatii',10 , 1)
+ END
+ GO
